@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GrzybMap Polska — Inteligentny Radar Grzybiarza & Bank Danych o Lasach</title>
+    <meta name="description" content="Profesjonalna mapa lasów dla grzybiarzy w Polsce z analizą drzewostanów BDL, historią opadów i algorytmem szansy występowania borowików, podgrzybków i kurek." />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍄</text></svg>" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- Fullscreen Map -->
+      <div id="map"></div>
+
+      <!-- Floating Zoom Level Advisory Hint -->
+      <div id="zoomHintBanner" class="zoom-hint-banner">
+        <span>🔍 Przybliż mapę (zoom 13+), aby widzieć i badać mikrowydzielenia leśne BDL</span>
+      </div>
+
+      <!-- Top Floating Navigation & Filters Header -->
+      <header class="top-header">
+        <div class="brand-badge">
+          <span class="brand-icon">🍄</span>
+          <div class="brand-info">
+            <span class="brand-title">GrzybMap Polska</span>
+            <span class="brand-tag">BDL Lasy Państwowe • Wersja PoC</span>
+          </div>
+        </div>
+
+        <div class="header-controls">
+          <!-- Spot Quick Jumper -->
+          <select id="spotSelect" class="glass-select" title="Wybierz słynny las w Polsce">
+            <option value="" disabled selected>🌲 Wybierz słynny las...</option>
+          </select>
+
+          <!-- Season Selector -->
+          <select id="seasonSelect" class="glass-select" title="Zmień miesiąc, aby przetestować sezonowość">
+            <option value="5">🌱 Maj (Wczesny sezon)</option>
+            <option value="7">☀️ Lipiec (Kurki & Borowiki)</option>
+            <option value="9" selected>🍂 Wrzesień (Szczyt sezonu!)</option>
+            <option value="10">🍁 Październik (Podgrzybki & Rydze)</option>
+            <option value="11">❄️ Listopad (Późne zbiory)</option>
+          </select>
+
+          <!-- Base Layer Direct Selector (Audit fix: no more blind cycling) -->
+          <select id="layerSelect" class="glass-select" title="Wybierz podkład mapy">
+            <option value="satellite" selected>🛰️ Satelita (Esri Global)</option>
+            <option value="geoportal">🇵🇱 Ortofoto RP (Geoportal.gov.pl)</option>
+            <option value="topo">⛰️ Topo & Szlaki (OpenTopoMap)</option>
+            <option value="dark">🌙 Ciemna (Esri Dark Canvas)</option>
+            <option value="osm">🗺️ Standardowa (OpenStreetMap)</option>
+          </select>
+        </div>
+      </header>
+
+      <!-- Bottom Floating Action Bar -->
+      <div class="bottom-floating-bar">
+        <button id="btnLocateMe" class="action-chip" title="Zlokalizuj mnie (GPS)">
+          <span>📍</span>
+          <span>Moja pozycja</span>
+        </button>
+        <button id="btnSaveCar" class="action-chip" title="Zapamiętaj miejsce parkowania auta">
+          <span>🚗</span>
+          <span id="carBtnText">Zapisz auto</span>
+        </button>
+        <button id="btnToggleBdl" class="action-chip active" title="Przełącz warstwę wydzieleń leśnych">
+          <span>🌲</span>
+          <span>Warstwa BDL (Włączona)</span>
+        </button>
+      </div>
+
+      <!-- Right-Hand Sliding Inspector Drawer -->
+      <aside id="inspectorDrawer" class="inspector-drawer">
+        <!-- Drawer Header -->
+        <div class="drawer-header">
+          <div class="drawer-title-group">
+            <h2 id="parcelAddress" class="drawer-title">Wybierz wydzielenie leśne</h2>
+            <span id="parcelSubtext" class="drawer-subtitle">Kliknij dowolny las na mapie (zoom 13+)</span>
+          </div>
+          <button id="drawerCloseBtn" class="drawer-close-btn" title="Zamknij panel">&times;</button>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="drawer-tabs">
+          <button class="tab-btn active" data-tab="tab-radar">
+            <span>🍄</span>
+            <span>Grzyb-Radar</span>
+          </button>
+          <button class="tab-btn" data-tab="tab-stand">
+            <span>🌲</span>
+            <span>Drzewostan</span>
+          </button>
+          <button class="tab-btn" data-tab="tab-weather">
+            <span>🌧️</span>
+            <span>Opady & Pogoda</span>
+          </button>
+          <button class="tab-btn" data-tab="tab-car">
+            <span>🧭</span>
+            <span>Nawigator Auta</span>
+          </button>
+        </div>
+
+        <!-- Drawer Scrollable Body -->
+        <div class="drawer-content">
+          <!-- Status Banner (Zbiór dozwolony / Rezerwat) -->
+          <div id="statusBanner" class="status-pill-banner allowed">
+            <span id="statusIcon">✅</span>
+            <span id="statusText">Lasy Państwowe (GOSP) — Zbiór grzybów dozwolony</span>
+          </div>
+
+          <!-- TAB 1: MUSHROOM RADAR -->
+          <div id="tab-radar" class="tab-pane active">
+            <div class="radar-section-title">
+              <span>Szansa występowania grzybów</span>
+              <span id="radarCountBadge" style="font-size: 0.75rem; color: var(--emerald-neon); font-weight: 600;">8 gatunków</span>
+            </div>
+
+            <!-- Filter chips -->
+            <div class="mush-filter-bar">
+              <button class="mush-filter-pill active" data-filter="all">Wszystkie</button>
+              <button class="mush-filter-pill" data-filter="high">Wysoka szansa (≥70%)</button>
+              <button class="mush-filter-pill" data-filter="prime">Wybitne jadalne</button>
+            </div>
+
+            <div id="mushroomCardsList" class="radar-cards-list" style="margin-top: 12px;">
+              <!-- Dynamic Cards generated by matcherService -->
+            </div>
+          </div>
+
+          <!-- TAB 2: FOREST STAND & SOIL (BDL DATA) -->
+          <div id="tab-stand" class="tab-pane" style="display: none;">
+            <div class="metrics-grid">
+              <div class="metric-card">
+                <span class="metric-label">Główny gatunek</span>
+                <span id="standSpeciesVal" class="metric-value">🌲 Sosna (80%)</span>
+                <span id="standSpeciesLatin" class="metric-desc">Pinus sylvestris</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">Wiek drzewostanu</span>
+                <span id="standAgeVal" class="metric-value">58 lat</span>
+                <span id="standAgeCat" class="metric-desc">Dojrzały bór</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">Siedlisko leśne</span>
+                <span id="standHabitatVal" class="metric-value">BMŚW</span>
+                <span id="standHabitatDesc" class="metric-desc">Bór mieszany świeży</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">Powierzchnia wyciszenia</span>
+                <span id="standAreaVal" class="metric-value">3.4 ha</span>
+                <span id="standInspectorate" class="metric-desc">Nadleśnictwo Celestynów</span>
+              </div>
+            </div>
+
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color-light); border-radius: var(--radius-md); padding: 14px; margin-top: 14px;">
+              <h4 style="font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Adres leśny BDL</h4>
+              <p id="fullAddressText" style="font-family: monospace; font-size: 0.88rem; color: #fff;">17-01-1-03-360-a-00</p>
+              <p style="font-size: 0.72rem; color: var(--text-dim); margin-top: 6px;">Format: Regionalna Dyrekcja - Nadleśnictwo - Obręb - Leśnictwo - Oddział - Wydzielenie</p>
+            </div>
+          </div>
+
+          <!-- TAB 3: WEATHER & RAIN HISTORY -->
+          <div id="tab-weather" class="tab-pane" style="display: none;">
+            <div class="metrics-grid">
+              <div class="metric-card">
+                <span class="metric-label">Suma opadów (10 dni)</span>
+                <span id="weatherRainVal" class="metric-value">🌧️ 18.4 mm</span>
+                <span id="weatherRainStatus" class="metric-desc" style="color: var(--emerald-neon);">Dobre nawilżenie ściółki</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">Średnia temp. gleby</span>
+                <span id="weatherTempVal" class="metric-value">🌡️ 16.5 °C</span>
+                <span class="metric-desc">Optymalna dla grzybni</span>
+              </div>
+            </div>
+            
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color-light); border-radius: var(--radius-md); padding: 14px; margin-top: 14px;">
+              <h4 style="font-size: 0.85rem; color: #fff; margin-bottom: 6px;">Wpływ pogody na grzybnię</h4>
+              <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">
+                Grzybnia borowików i podgrzybków do obfitego owocowania potrzebuje tzw. "szoku wilgotnościowo-termicznego": 
+                solidnego deszczu (>15 mm) i 2-4 ciepłych dni z temperaturą powyżej 14°C.
+              </p>
+            </div>
+          </div>
+
+          <!-- TAB 4: CAR RADAR & COMPASS -->
+          <div id="tab-car" class="tab-pane" style="display: none;">
+            <div class="compass-view">
+              <div class="compass-dial-container">
+                <div id="compassArrow" class="compass-arrow">
+                  <div class="arrow-north"></div>
+                  <div class="arrow-south"></div>
+                </div>
+              </div>
+              <div style="text-align: center;">
+                <div id="carDistanceText" class="compass-distance">-- m</div>
+                <div id="carBearingText" class="compass-subtext">Azymut: --° • Czas marszu: -- min</div>
+              </div>
+              
+              <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                <button id="btnSetCarHere" class="glass-pill-btn" style="border-color: var(--emerald-neon); width: 100%; justify-content: center;">
+                  <span>📍</span>
+                  <span>Ustaw auto w wybranym punkcie</span>
+                </button>
+                <button id="btnCenterCar" class="glass-pill-btn" style="width: 100%; justify-content: center;">
+                  <span>🧭</span>
+                  <span>Pokaż auto na mapie</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legal & Sanepid Advisory Box -->
+          <div class="sanepid-banner">
+            <span class="sanepid-logo-icon">🏛️</span>
+            <div class="sanepid-text">
+              <strong>Bezpłatna weryfikacja w Sanepid:</strong><br />
+              W razie jakichkolwiek wątpliwości skonsultuj swoje zbiory z bezpłatnym grzyboznawcą w najbliższej Państwowej Powiatowej Stacji Sanitarno-Epidemiologicznej (Sanepid). Nigdy nie ryzykuj zdrowia!
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

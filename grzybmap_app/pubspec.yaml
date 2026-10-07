@@ -1,0 +1,40 @@
+name: grzybmap_app
+description: "Inteligentny Radar Grzybiarza & Bank Danych o Lasach w Polsce"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.2.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Icons & Styling
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+
+  # Maps & GIS
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
+  # Networking & HTML Parsing
+  dio: ^5.7.0
+  html: ^0.15.5
+
+  # Sensors & Hardware Location
+  geolocator: ^13.0.2
+  sensors_plus: ^6.1.1
+  flutter_compass: ^0.8.0
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
