@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import '../domain/models.dart';
 import '../domain/repositories/forest_repository.dart';
 import 'repositories/forest_repository_impl.dart';
@@ -19,6 +20,7 @@ class BdlService implements ForestRepository {
     required int pixelX,
     required int pixelY,
     required int zoom,
+    CancelToken? cancelToken,
   }) {
     return _repository.getParcelAt(
       lat: lat,
@@ -29,6 +31,7 @@ class BdlService implements ForestRepository {
       pixelX: pixelX,
       pixelY: pixelY,
       zoom: zoom,
+      cancelToken: cancelToken,
     );
   }
 

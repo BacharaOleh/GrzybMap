@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../domain/models.dart';
 import '../../domain/repositories/weather_repository.dart';
@@ -44,6 +45,7 @@ class WeatherRepositoryImpl implements WeatherRepository {
   Future<WeatherRainfall?> getRainfallHistory({
     required double lat,
     required double lng,
+    CancelToken? cancelToken,
   }) async {
     final cacheKey = '${lat.toStringAsFixed(2)}_${lng.toStringAsFixed(2)}';
     final cached = _cache[cacheKey];
@@ -52,7 +54,11 @@ class WeatherRepositoryImpl implements WeatherRepository {
     }
 
     try {
-      final data = await _remoteDataSource.fetchRainfallJson(lat: lat, lng: lng);
+      final data = await _remoteDataSource.fetchRainfallJson(
+        lat: lat,
+        lng: lng,
+        cancelToken: cancelToken,
+      );
       final daily = data['daily'] as Map<String, dynamic>? ?? {};
       final rainList = (daily['precipitation_sum'] as List<dynamic>?)
               ?.where((e) => e != null)
@@ -134,8 +140,13 @@ class WeatherRepositoryImpl implements WeatherRepository {
 
       _cache[cacheKey] = _WeatherCacheEntry(result, DateTime.now());
       return result;
-    } catch (e) {
-      // W3 fix: Return null on error instead of fabricated 16.5 mm
+    } on DioException {
+      if (cancelToken?.isCancelled ?? false) {
+        rethrow;
+      }
+      // W3 fix: Non-fatal weather API timeout / server error returns null (honest fallback)
+      return null;
+    } catch (_) {
       return null;
     }
   }

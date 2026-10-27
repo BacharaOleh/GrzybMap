@@ -10,6 +10,7 @@ abstract class BdlRemoteDataSource {
     required int pixelX,
     required int pixelY,
     required int zoom,
+    CancelToken? cancelToken,
   });
 }
 
@@ -39,6 +40,7 @@ class BdlRemoteDataSourceImpl implements BdlRemoteDataSource {
     required int pixelX,
     required int pixelY,
     required int zoom,
+    CancelToken? cancelToken,
   }) async {
     final layers = zoom >= 13 ? '1,3,4' : '4,5';
 
@@ -57,10 +59,11 @@ class BdlRemoteDataSourceImpl implements BdlRemoteDataSource {
       'Y': pixelY.toString(),
     };
 
-    final endpoint = kIsWeb ? '/api/bdl' : ApiConstants.bdlWmsUrl;
-    final response = await _dio.get(
+    const endpoint = kIsWeb ? '/api/bdl' : ApiConstants.bdlWmsUrl;
+    final response = await _dio.get<dynamic>(
       endpoint,
       queryParameters: queryParams,
+      cancelToken: cancelToken,
     );
 
     return response.data.toString();

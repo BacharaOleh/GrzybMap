@@ -25,11 +25,12 @@ dependencies:
 
   # Sensors & Hardware Location
   geolocator: ^13.0.2
-  sensors_plus: ^6.1.1
-  flutter_compass: ^0.8.0
 
   # State Management
   flutter_riverpod: ^2.6.1
+
+  # Local Persistence
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:
@@ -38,3 +39,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/mushrooms/

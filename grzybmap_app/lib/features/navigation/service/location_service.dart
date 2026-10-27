@@ -65,7 +65,7 @@ class LocationService {
 
     for (final url in geoEndpoints) {
       try {
-        final res = await _dio.get(url);
+        final res = await _dio.get<dynamic>(url);
         final data = res.data is Map<String, dynamic>
             ? res.data as Map<String, dynamic>
             : null;

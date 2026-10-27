@@ -5,7 +5,7 @@ const { execSync } = require('child_process');
 
 const CACHE_DIR = 'I:\\setup_cache';
 const JAVA_DIR = 'I:\\Java\\jdk-17';
-const ANDROID_SDK_DIR = 'I:\\Android\\sdk';
+const ANDROID_SDK_DIR = 'I:\\SDKfile';
 
 if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
 if (!fs.existsSync(JAVA_DIR)) fs.mkdirSync(JAVA_DIR, { recursive: true });
@@ -95,8 +95,9 @@ async function run() {
     console.log('[SUCCESS] Android cmdline-tools installed to ' + cmdlineTarget);
 
     // 5. Configure Flutter SDK
-    console.log('[CONFIG] Configuring Flutter with Android SDK...');
+    console.log('[CONFIG] Configuring Flutter with Android SDK & JDK 17...');
     execSync(`I:\\flutter\\bin\\flutter.bat config --android-sdk "${ANDROID_SDK_DIR}"`, { stdio: 'inherit' });
+    execSync(`I:\\flutter\\bin\\flutter.bat config --jdk-dir "${JAVA_DIR}"`, { stdio: 'inherit' });
 
     console.log('[COMPLETE] Android toolchain base is ready on Drive I:!');
   } catch (err) {

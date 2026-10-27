@@ -1,16 +1,34 @@
 import 'package:flutter/material.dart';
 
+class LookalikeFeature {
+  final String featureName;
+  final String edibleCharacteristic;
+  final String lookalikeCharacteristic;
+  final bool isCritical;
+
+  const LookalikeFeature({
+    required this.featureName,
+    required this.edibleCharacteristic,
+    required this.lookalikeCharacteristic,
+    this.isCritical = false,
+  });
+}
+
 class MushroomLookalike {
   final String namePl;
   final String latin;
   final bool isLethal;
   final String warningPl;
+  final String? photoAsset;
+  final List<LookalikeFeature> features;
 
   const MushroomLookalike({
     required this.namePl,
     required this.latin,
     required this.isLethal,
     required this.warningPl,
+    this.photoAsset,
+    this.features = const [],
   });
 }
 
@@ -45,6 +63,8 @@ class Mushroom {
   final String descriptionPl;
   final String tipsPl;
   final MushroomLookalike? lookalike;
+  final bool isColdTolerant;
+  final String? photoAsset;
 
   const Mushroom({
     required this.id,
@@ -63,6 +83,8 @@ class Mushroom {
     required this.descriptionPl,
     required this.tipsPl,
     this.lookalike,
+    this.isColdTolerant = false,
+    this.photoAsset,
   });
 }
 

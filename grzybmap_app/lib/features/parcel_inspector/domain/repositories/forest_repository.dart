@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import '../models.dart';
 
 /// Contract for forest parcel queries and forest data inspection.
@@ -11,5 +12,6 @@ abstract class ForestRepository {
     required int pixelX,
     required int pixelY,
     required int zoom,
+    CancelToken? cancelToken,
   });
 }

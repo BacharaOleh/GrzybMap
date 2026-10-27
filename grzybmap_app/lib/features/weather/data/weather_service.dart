@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import '../domain/models.dart';
 import '../domain/repositories/weather_repository.dart';
 import 'repositories/weather_repository_impl.dart';
@@ -13,7 +14,12 @@ class WeatherService implements WeatherRepository {
   Future<WeatherRainfall?> getRainfallHistory({
     required double lat,
     required double lng,
+    CancelToken? cancelToken,
   }) {
-    return _repository.getRainfallHistory(lat: lat, lng: lng);
+    return _repository.getRainfallHistory(
+      lat: lat,
+      lng: lng,
+      cancelToken: cancelToken,
+    );
   }
 }

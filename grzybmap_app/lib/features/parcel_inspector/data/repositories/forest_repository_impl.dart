@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import '../../domain/models.dart';
 import '../../domain/repositories/forest_repository.dart';
 import '../bdl_parser.dart';
@@ -35,6 +36,7 @@ class ForestRepositoryImpl implements ForestRepository {
     required int pixelX,
     required int pixelY,
     required int zoom,
+    CancelToken? cancelToken,
   }) async {
     final cacheKey = '${lat.toStringAsFixed(4)}_${lng.toStringAsFixed(4)}';
     final cached = _cache[cacheKey];
@@ -50,6 +52,7 @@ class ForestRepositoryImpl implements ForestRepository {
         pixelX: pixelX,
         pixelY: pixelY,
         zoom: zoom,
+        cancelToken: cancelToken,
       );
 
       final parcel = BdlParser.parseHtml(
@@ -70,7 +73,12 @@ class ForestRepositoryImpl implements ForestRepository {
 
       _cache[cacheKey] = _ParcelCacheEntry(parcel, DateTime.now(), ttl: ttl);
       return parcel;
-    } catch (e) {
+    } on DioException {
+      // Allow higher layer to distinguish cancellation and network failures
+      rethrow;
+    } on FormatException {
+      return null;
+    } catch (_) {
       return null;
     }
   }

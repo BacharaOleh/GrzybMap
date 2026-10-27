@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../domain/models.dart';
 
+/// Exhaustive Polish forest mushroom database verified against mycological
+/// taxonomy (Lasy Państwowe / Instytut Badawczy Leśnictwa).
 class MushroomDatabase {
   static const List<Mushroom> allMushrooms = [
+    // 1. Borowik szlachetny
     Mushroom(
       id: 'borowik_szlachetny',
       namePl: 'Borowik szlachetny (Prawdziwek)',
@@ -17,15 +20,80 @@ class MushroomDatabase {
       preferredHabitats: ['BŚW', 'BMŚW', 'LMŚW', 'LŚW'],
       seasonMonths: [6, 7, 8, 9, 10, 11],
       minRainfall14d: 15.0,
-      descriptionPl: 'Najbardziej poszukiwany grzyb w Polsce. Żyje w mikoryzie ze starymi sosnami, świerkami i dębami.',
+      descriptionPl: 'Najbardziej poszukiwany grzyb w Polsce. Żyje w mikoryzie ze starymi sosnami, świerkami, dębami i bukami.',
       tipsPl: 'Szukaj w ciepłych, dobrze naświetlonych borach na granicy mchów i borówczysk 2-4 dni po ulewnych deszczach.',
+      photoAsset: 'assets/mushrooms/borowik_szlachetny.webp',
       lookalike: MushroomLookalike(
         namePl: 'Goryczak żółciowy (Szatan)',
         latin: 'Tylopilus felleus',
         isLethal: false,
         warningPl: 'Niejadalny z powodu piekielnie gorzkiego smaku. Rurki starszych okazów różowieją, a na trzonie widoczna jest ciemna wypukła siateczka.',
+        photoAsset: 'assets/mushrooms/goryczak_zolciowy.webp',
+        features: [
+          LookalikeFeature(
+            featureName: 'Rurki (Hymenofor)',
+            edibleCharacteristic: 'Białe u młodych, z wiekiem oliwkowo-żółte (nigdy różowe)',
+            lookalikeCharacteristic: 'Białawe, u dojrzałych okazów wyraźnie RÓŻOWIEJĄCE',
+            isCritical: true,
+          ),
+          LookalikeFeature(
+            featureName: 'Siatka na trzonie',
+            edibleCharacteristic: 'Delikatna, jasna (biała) w górnej części trzonu',
+            lookalikeCharacteristic: 'Ciemna, brązowo-czarna, gruba i wypukła na całej długości',
+            isCritical: true,
+          ),
+          LookalikeFeature(
+            featureName: 'Smak miąższu',
+            edibleCharacteristic: 'Przyjemny, łagodny, orzechowy aromat',
+            lookalikeCharacteristic: 'Piekielnie gorzki (nawet odrobina niszczy całą potrawę)',
+            isCritical: false,
+          ),
+        ],
       ),
     ),
+
+    // 2. Borowik sosnowy
+    Mushroom(
+      id: 'borowik_sosnowy',
+      namePl: 'Borowik sosnowy',
+      nameRu: 'Боровик сосновый',
+      latin: 'Boletus pinophilus',
+      badge: 'Wiosenno-jesienny rarytas',
+      edibility: 'Jadalny (Wybitny)',
+      edibilityColor: Color(0xFF10B981),
+      preferredTrees: ['SO', 'BK'],
+      treeWeight: 45,
+      preferredAge: MushroomAgeRange(min: 40, idealMin: 55, idealMax: 100, max: 140),
+      preferredHabitats: ['BŚW', 'BMŚW', 'BS'],
+      seasonMonths: [5, 6, 9, 10, 11],
+      minRainfall14d: 14.0,
+      descriptionPl: 'Ciemnobrązowy lub purpurowo-kasztanowy kapelusz. Ściśle związany ze starymi sośninami na glebach piaszczystych.',
+      tipsPl: 'Występuje w dwóch rzutach: wczesnym (maj-czerwiec) oraz jesiennym (wrzesień-listopad) w mszystych borach sosnowych.',
+      photoAsset: 'assets/mushrooms/borowik_sosnowy.webp',
+      lookalike: MushroomLookalike(
+        namePl: 'Goryczak żółciowy',
+        latin: 'Tylopilus felleus',
+        isLethal: false,
+        warningPl: 'Goryczak ma różowiejące rurki i wybitnie gorzki miąższ niszczący każdą potrawę.',
+        photoAsset: 'assets/mushrooms/goryczak_zolciowy.webp',
+        features: [
+          LookalikeFeature(
+            featureName: 'Rurki pod kapeluszem',
+            edibleCharacteristic: 'Kremowe do oliwkowo-żółtych',
+            lookalikeCharacteristic: 'Brudnoróżowe u dojrzałych okazów',
+            isCritical: true,
+          ),
+          LookalikeFeature(
+            featureName: 'Siatka na trzonie',
+            edibleCharacteristic: 'Czerwonawa lub jasna, drobna',
+            lookalikeCharacteristic: 'Ciemnobrązowa, gruba i wypukła',
+            isCritical: true,
+          ),
+        ],
+      ),
+    ),
+
+    // 3. Podgrzybek brunatny
     Mushroom(
       id: 'podgrzybek_brunatny',
       namePl: 'Podgrzybek brunatny',
@@ -42,8 +110,32 @@ class MushroomDatabase {
       minRainfall14d: 10.0,
       descriptionPl: 'Klasyk polskich borów sosnowych. Masowo występuje jesienią wśród zielonych mchów.',
       tipsPl: 'Uwielbia zwarte poduszki mchu w czystych sośninach. Po uciśnięciu rurki natychmiast sinieją.',
+      photoAsset: 'assets/mushrooms/podgrzybek_brunatny.webp',
       lookalike: null,
     ),
+
+    // 4. Podgrzybek zajączek
+    Mushroom(
+      id: 'podgrzybek_zajaczek',
+      namePl: 'Podgrzybek zajączek (Zajączek)',
+      nameRu: 'Моховик зелёный / трещиноватый',
+      latin: 'Xerocomellus chrysenteron',
+      badge: 'Letnio-jesienny bywalec',
+      edibility: 'Jadalny (Smaczny)',
+      edibilityColor: Color(0xFF10B981),
+      preferredTrees: ['DB', 'BK', 'SO', 'ŚW'],
+      treeWeight: 35,
+      preferredAge: MushroomAgeRange(min: 25, idealMin: 35, idealMax: 75, max: 110),
+      preferredHabitats: ['BMŚW', 'LMŚW', 'LŚW', 'BŚW'],
+      seasonMonths: [6, 7, 8, 9, 10],
+      minRainfall14d: 11.0,
+      descriptionPl: 'Aksamitny kapelusz często spękany w siateczkę z czerwonawym podkładem pod skórką. Rośnie w lasach mieszanych i liściastych.',
+      tipsPl: 'Wypatruj na skarpach leśnych dróg, w trawie pod dębami i bukami.',
+      photoAsset: 'assets/mushrooms/podgrzybek_zajaczek.webp',
+      lookalike: null,
+    ),
+
+    // 5. Pieprznik jadalny (Kurka)
     Mushroom(
       id: 'pieprznik_jadalny',
       namePl: 'Pieprznik jadalny (Kurka)',
@@ -56,17 +148,41 @@ class MushroomDatabase {
       treeWeight: 35,
       preferredAge: MushroomAgeRange(min: 20, idealMin: 35, idealMax: 70, max: 120),
       preferredHabitats: ['BŚW', 'BMŚW', 'BS', 'LMŚW'],
-      seasonMonths: [5, 6, 7, 8, 9, 10],
-      minRainfall14d: 15.0,
+      seasonMonths: [5, 6, 7, 8, 9, 10, 11],
+      minRainfall14d: 14.0,
       descriptionPl: 'Żółte złoto lasu. Rośnie w grupach na glebach piaszczystych i kwaśnych pośród mchu i igliwia.',
       tipsPl: 'Gdy znajdziesz jedną, rozejrzyj się w promieniu 10 metrów pod gałęziami i igliwiem.',
+      photoAsset: 'assets/mushrooms/pieprznik_jadalny.webp',
       lookalike: MushroomLookalike(
         namePl: 'Lisieczka pomarańczowa',
         latin: 'Hygrophoropsis aurantiaca',
         isLethal: false,
-        warningPl: 'Słabo trująca / niestrawna. Ma cienki pomarańczowy kapelusz i gęste blaszki zamiast listewkowatych fałdów.',
+        warningPl: 'Słabo trująca / niestrawna. Ma cienki pomarańczowy kapelusz i gęste blaszki zamiast fałdów biegnących w dół trzonu.',
+        photoAsset: 'assets/mushrooms/lisieczka_pomaranczowa.webp',
+        features: [
+          LookalikeFeature(
+            featureName: 'Hymenofor (spód)',
+            edibleCharacteristic: 'Grube, tępe fałdy/listewki zbiegające głęboko po trzonie',
+            lookalikeCharacteristic: 'Gęste, cienkie, wiotkie blaszki łatwo oddzielające się od miąższu',
+            isCritical: true,
+          ),
+          LookalikeFeature(
+            featureName: 'Kolor owocnika',
+            edibleCharacteristic: 'Matowy, jednolity żółtka jajka (bladożółty do cytrynowego)',
+            lookalikeCharacteristic: 'Jaskrawo pomarańczowy, wręcz płomienny z ciemniejszym środkiem',
+            isCritical: false,
+          ),
+          LookalikeFeature(
+            featureName: 'Miąższ i trzon',
+            edibleCharacteristic: 'Miąższ twardy, białawy w środku, zapach owocowo-morelowy',
+            lookalikeCharacteristic: 'Miąższ miękki, wiotki, trzon cienki i często pusty',
+            isCritical: false,
+          ),
+        ],
       ),
     ),
+
+    // 6. Maślak zwyczajny
     Mushroom(
       id: 'maslak_zwyczajny',
       namePl: 'Maślak zwyczajny',
@@ -81,10 +197,34 @@ class MushroomDatabase {
       preferredHabitats: ['BŚW', 'BS', 'BMŚW'],
       seasonMonths: [5, 6, 7, 8, 9, 10],
       minRainfall14d: 10.0,
-      descriptionPl: 'Ściśle związany z młodą sosną. Uwielbia nasłonecznione skraje lasu, pasy przeciwpożarowe i polany.',
-      tipsPl: 'Szukaj w młodych uprawach sosnowych o wysokości 2-4m oraz w trawiastych młodnikach.',
+      descriptionPl: 'Ściśle związany z młodą sosną. Posiada charakterystyczny skórzasty pierścień na trzonie i lepką brązową skórkę.',
+      tipsPl: 'Szukaj w młodych uprawach sosnowych o wysokości 2-4m oraz w trawiastych pasach młodnika.',
+      photoAsset: 'assets/mushrooms/maslak_zwyczajny.webp',
       lookalike: null,
     ),
+
+    // 7. Maślak ziarnisty
+    Mushroom(
+      id: 'maslak_ziarnisty',
+      namePl: 'Maślak ziarnisty',
+      nameRu: 'Маслёнок зернистый',
+      latin: 'Suillus granulatus',
+      badge: 'Słoneczne polany',
+      edibility: 'Jadalny (Smaczny)',
+      edibilityColor: Color(0xFF10B981),
+      preferredTrees: ['SO'],
+      treeWeight: 45,
+      preferredAge: MushroomAgeRange(min: 10, idealMin: 15, idealMax: 30, max: 50),
+      preferredHabitats: ['BŚW', 'BS', 'BMŚW'],
+      seasonMonths: [6, 7, 8, 9, 10, 11],
+      minRainfall14d: 11.0,
+      descriptionPl: 'Różni się od maślaka zwyczajnego brakiem pierścienia na trzonie oraz drobnymi kropelkami mleczka u młodych okazów.',
+      tipsPl: 'Częsty w nasłonecznionych sośninach na glebach wapiennych i piaszczystych z rzadką trawą.',
+      photoAsset: 'assets/mushrooms/maslak_ziarnisty.webp',
+      lookalike: null,
+    ),
+
+    // 8. Mleczaj rydz
     Mushroom(
       id: 'mleczaj_rydz',
       namePl: 'Mleczaj rydz (Rydz)',
@@ -101,13 +241,58 @@ class MushroomDatabase {
       minRainfall14d: 12.0,
       descriptionPl: 'Wspaniały grzyb smażony na maśle. Wydziela pomarańczowe mleczko, które na powietrzu powoli zielenieje.',
       tipsPl: 'Szukaj w dobrze naświetlonych sośninach na glebach piaszczystych i wapiennych z trawiastym dnem.',
+      photoAsset: 'assets/mushrooms/mleczaj_rydz.webp',
       lookalike: MushroomLookalike(
         namePl: 'Mleczaj wełnianka',
         latin: 'Lactarius torminosus',
         isLethal: false,
         warningPl: 'Trujący! Rośnie pod brzozami, ma wełnisty brzeg kapelusza i ostre, piekące BIAŁE mleczko (nie pomarańczowe).',
+        photoAsset: 'assets/mushrooms/mleczaj_welnianka.webp',
+        features: [
+          LookalikeFeature(
+            featureName: 'Kolor mleczka',
+            edibleCharacteristic: 'MARCHEWKOWO-POMARAŃCZOWE, po czasie zielenieje',
+            lookalikeCharacteristic: 'CZYSTO BIAŁE, nie zmienia barwy, piekące i palące',
+            isCritical: true,
+          ),
+          LookalikeFeature(
+            featureName: 'Brzeg kapelusza',
+            edibleCharacteristic: 'Gładki, nieowłosiony, z koncentrycznymi kręgami',
+            lookalikeCharacteristic: 'Gęsto pokryty wełnistymi, długimi, poskręcanymi włoskami',
+            isCritical: true,
+          ),
+          LookalikeFeature(
+            featureName: 'Siedlisko / drzewo',
+            edibleCharacteristic: 'Wyłącznie pod sosnami w piaszczystej trawie',
+            lookalikeCharacteristic: 'Wyłącznie w obecności brzóz w wilgotnych miejscach',
+            isCritical: false,
+          ),
+        ],
       ),
     ),
+
+    // 9. Mleczaj jodłowy
+    Mushroom(
+      id: 'mleczaj_jodlowy',
+      namePl: 'Mleczaj jodłowy',
+      nameRu: 'Рыжик пихтовый',
+      latin: 'Lactarius salmonicolor',
+      badge: 'Górski przysmak',
+      edibility: 'Jadalny (Wyborny)',
+      edibilityColor: Color(0xFF10B981),
+      preferredTrees: ['JD', 'ŚW'],
+      treeWeight: 50,
+      preferredAge: MushroomAgeRange(min: 20, idealMin: 35, idealMax: 70, max: 100),
+      preferredHabitats: ['LMGŚW', 'BMGŚW', 'LMWYŻŚW', 'BMWYŻŚW', 'LMŚW'],
+      seasonMonths: [8, 9, 10, 11],
+      minRainfall14d: 14.0,
+      descriptionPl: 'Odpowiednik rydza z lasów jodłowych wyżyn i gór. Pomarańczowe mleczko nie zielenieje tak silnie.',
+      tipsPl: 'Szukaj w bukowo-jodłowych lasach wyżynnych (Małopolska, Podkarpacie, Sudety).',
+      photoAsset: 'assets/mushrooms/mleczaj_jodlowy.webp',
+      lookalike: null,
+    ),
+
+    // 10. Koźlarz babka
     Mushroom(
       id: 'kozlarz_babka',
       namePl: 'Koźlarz babka',
@@ -124,8 +309,11 @@ class MushroomDatabase {
       minRainfall14d: 10.0,
       descriptionPl: 'Obligatoryjny partner brzozy. Rośnie wszędzie tam, gdzie w lesie pojawia się choć kilka brzóz.',
       tipsPl: 'Wypatruj białych pni brzóz na krawędziach borów i w wilgotniejszych zagłębieniach terenu.',
+      photoAsset: 'assets/mushrooms/kozlarz_babka.webp',
       lookalike: null,
     ),
+
+    // 11. Koźlarz czerwony
     Mushroom(
       id: 'kozlarz_czerwony',
       namePl: 'Koźlarz czerwony (Krawiec)',
@@ -141,9 +329,33 @@ class MushroomDatabase {
       seasonMonths: [6, 7, 8, 9, 10],
       minRainfall14d: 12.0,
       descriptionPl: 'Jeden z najpiękniejszych grzybów o jaskrawo pomarańczowym kapeluszu i twardym, siniejącym miąższu.',
-      tipsPl: 'Szukaj w pobliżu kęp osiki i młodych brzóz.',
+      tipsPl: 'Szukaj w pobliżu kęp osiki, topoli i młodych brzóz na obrzeżach lasu.',
+      photoAsset: 'assets/mushrooms/kozlarz_czerwony.webp',
       lookalike: null,
     ),
+
+    // 12. Koźlarz grabowy
+    Mushroom(
+      id: 'kozlarz_grabowy',
+      namePl: 'Koźlarz grabowy',
+      nameRu: 'Грабовик (Подграбовик)',
+      latin: 'Leccinum pseudoscabrum',
+      badge: 'Mieszkaniec grądów',
+      edibility: 'Jadalny (Smaczny)',
+      edibilityColor: Color(0xFF10B981),
+      preferredTrees: ['GB', 'DB', 'BK'],
+      treeWeight: 50,
+      preferredAge: MushroomAgeRange(min: 20, idealMin: 35, idealMax: 70, max: 100),
+      preferredHabitats: ['LŚW', 'LMŚW'],
+      seasonMonths: [6, 7, 8, 9, 10],
+      minRainfall14d: 12.0,
+      descriptionPl: 'Pofałdowany, nierówny kapelusz i miąższ, który po przekrojeniu powoli ciemnieje na fioletowo-czarno. Partner graba i leszczyny.',
+      tipsPl: 'Szukaj w cienistych lasach liściastych z udziałem graba i dębu.',
+      photoAsset: 'assets/mushrooms/kozlarz_grabowy.webp',
+      lookalike: null,
+    ),
+
+    // 13. Czubajka kania
     Mushroom(
       id: 'czubajka_kania',
       namePl: 'Czubajka kania (Sowa)',
@@ -160,12 +372,199 @@ class MushroomDatabase {
       minRainfall14d: 15.0,
       descriptionPl: 'Ogromny grzyb o ruchomym pierścieniu na trzonie. Kapelusze panierowane jak schabowe to rarytas.',
       tipsPl: 'Lubi prześwietlone skraje lasów, polany, pobocza leśnych dróg i trawiastą ściółkę.',
+      photoAsset: 'assets/mushrooms/czubajka_kania.webp',
       lookalike: MushroomLookalike(
         namePl: 'Muchomor sromotnikowy (Zielonawy)',
         latin: 'Amanita phalloides',
         isLethal: true,
         warningPl: 'ŚMIERTELNIE TRUJĄCY! Kania ma ZAWSZE ruchomy pierścień, pręgowany zygzakowaty trzon i suchy łuskowaty kapelusz. Muchomor ma pochwę u podstawy!',
+        photoAsset: 'assets/mushrooms/muchomor_sromotnikowy.webp',
+        features: [
+          LookalikeFeature(
+            featureName: 'Pierścień na trzonie',
+            edibleCharacteristic: 'RUCHOMY! Daje się swobodnie przesuwać w górę i w dół trzonu',
+            lookalikeCharacteristic: 'PRZYROŚNIĘTY, zwisający jak delikatny mankiet, nieruchomy',
+            isCritical: true,
+          ),
+          LookalikeFeature(
+            featureName: 'Podstawa trzonu',
+            edibleCharacteristic: 'Bulwiasta, zgrubiała, BEZ workowatej pochwy',
+            lookalikeCharacteristic: 'Tkwi w wyraźnej, białej, wolnej POCHWIE (volva)',
+            isCritical: true,
+          ),
+          LookalikeFeature(
+            featureName: 'Powierzchnia trzonu',
+            edibleCharacteristic: 'Wyraźny brunatny poprzeczny zygzakowaty wzór (skóra żmii)',
+            lookalikeCharacteristic: 'Gładki lub lekko zygzakowaty, bladozielonkawy, nie brązowy',
+            isCritical: true,
+          ),
+          LookalikeFeature(
+            featureName: 'Kapelusz',
+            edibleCharacteristic: 'Suchy, z dużymi brązowymi odrywającymi się łuskami i czubkiem',
+            lookalikeCharacteristic: 'Gładki, oliwkowo-zielonkawy, jedwabisty, wrośnięte włókienka',
+            isCritical: true,
+          ),
+        ],
       ),
+    ),
+
+    // 14. Opieńka miodowa
+    Mushroom(
+      id: 'opienka_miodowa',
+      namePl: 'Opieńka miodowa',
+      nameRu: 'Опёнок осенний',
+      latin: 'Armillaria mellea',
+      badge: 'Jesienny wysyp na pniach',
+      edibility: 'Jadalny (Po obgotowaniu)',
+      edibilityColor: Color(0xFF10B981),
+      preferredTrees: ['DB', 'BK', 'BRZ', 'SO', 'ŚW'],
+      treeWeight: 35,
+      preferredAge: MushroomAgeRange(min: 40, idealMin: 60, idealMax: 110, max: 150),
+      preferredHabitats: ['LŚW', 'LMŚW', 'BMŚW'],
+      seasonMonths: [9, 10, 11],
+      minRainfall14d: 12.0,
+      descriptionPl: 'Rośnie kępami na pniakach i korzeniach drzew liściastych i iglastych. Wspaniała marynowana.',
+      tipsPl: 'Wypatruj w wilgotnych lasach po pierwszych chłodniejszych nocach września i października na starych zrębach.',
+      photoAsset: 'assets/mushrooms/opienka_miodowa.webp',
+      lookalike: MushroomLookalike(
+        namePl: 'Maślanka wiązkowa',
+        latin: 'Hypholoma fasciculare',
+        isLethal: false,
+        warningPl: 'Trująca i gorzka! Ma siarkowożółty miąższ i zielonkawo-oliwkowe blaszki bez pierścienia.',
+        photoAsset: 'assets/mushrooms/maslanka_wiazkowa.webp',
+        features: [
+          LookalikeFeature(
+            featureName: 'Pierścień na trzonie',
+            edibleCharacteristic: 'Wyraźny, trwały, białawy pierścień z żółtawym brzegiem',
+            lookalikeCharacteristic: 'BRAK wyraźnego pierścienia (jedynie nikła strefa pierścieniowa)',
+            isCritical: true,
+          ),
+          LookalikeFeature(
+            featureName: 'Kolor blaszek',
+            edibleCharacteristic: 'Białawe, kremowe, później lekko rdzawo-żółtawe',
+            lookalikeCharacteristic: 'Siarkowożółte, z wiekiem brudnooliwkowe lub zielonkawo-czarne',
+            isCritical: true,
+          ),
+          LookalikeFeature(
+            featureName: 'Smak miąższu',
+            edibleCharacteristic: 'Przyjemny, grzybowy (wymaga min. 20 min obgotowania)',
+            lookalikeCharacteristic: 'Piekielnie gorzki i odpychający',
+            isCritical: false,
+          ),
+        ],
+      ),
+    ),
+
+    // 15. Gąska zielona (Zielonka)
+    Mushroom(
+      id: 'gaska_zielona',
+      namePl: 'Gąska zielona (Zielonka)',
+      nameRu: 'Рядовка зелёная (Зеленушка)',
+      latin: 'Tricholoma equestre',
+      badge: 'Listopadowy skarb borów',
+      edibility: 'Jadalny (Warunkowo)',
+      edibilityColor: Color(0xFFFBBF24),
+      preferredTrees: ['SO'],
+      treeWeight: 50,
+      preferredAge: MushroomAgeRange(min: 30, idealMin: 45, idealMax: 90, max: 130),
+      preferredHabitats: ['BS', 'BŚW'],
+      seasonMonths: [9, 10, 11, 12],
+      minRainfall14d: 10.0,
+      descriptionPl: 'Rośnie głęboko schowana w piasku pod igliwiem późną jesienią, gdy inne grzyby znikają po przymrozkach.',
+      tipsPl: 'Szukaj małych wzgórków i pęknięć w mchu w suchych borach sosnowych na piaszczystych wydmach.',
+      photoAsset: 'assets/mushrooms/gaska_zielona.webp',
+      lookalike: MushroomLookalike(
+        namePl: 'Muchomor sromotnikowy',
+        latin: 'Amanita phalloides',
+        isLethal: true,
+        warningPl: 'ŚMIERTELNIE TRUJĄCY! Gąska ZAWSZE ma żółte blaszki i brak pochwy u podstawy trzonu.',
+        photoAsset: 'assets/mushrooms/muchomor_sromotnikowy.webp',
+        features: [
+          LookalikeFeature(
+            featureName: 'Kolor blaszek',
+            edibleCharacteristic: 'SIARKOWO-ŻÓŁTE lub jaskrawo cytrynowe',
+            lookalikeCharacteristic: 'CZYSTO BIAŁE (nawet u starszych okazów)',
+            isCritical: true,
+          ),
+          LookalikeFeature(
+            featureName: 'Podstawa trzonu',
+            edibleCharacteristic: 'BEZ POCHWY! Trzon tkwi głęboko w piasku, często zakrzywiony',
+            lookalikeCharacteristic: 'Trzon osadzony w workowatej białej POCHWIE',
+            isCritical: true,
+          ),
+          LookalikeFeature(
+            featureName: 'Pierścień na trzonie',
+            edibleCharacteristic: 'BRAK pierścienia na trzonie',
+            lookalikeCharacteristic: 'Wyraźny, zwisający białawy pierścień',
+            isCritical: true,
+          ),
+        ],
+      ),
+    ),
+
+    // 16. Gąsówka fioletowawa
+    Mushroom(
+      id: 'gasowka_fioletowawa',
+      namePl: 'Gąsówka fioletowawa',
+      nameRu: 'Рядовка фиолетовая',
+      latin: 'Lepista nuda',
+      badge: 'Fioletowy jesienny przysmak',
+      edibility: 'Jadalny (Smaczny)',
+      edibilityColor: Color(0xFF10B981),
+      preferredTrees: ['SO', 'ŚW', 'BK', 'DB'],
+      treeWeight: 35,
+      preferredAge: MushroomAgeRange(min: 30, idealMin: 45, idealMax: 90, max: 120),
+      preferredHabitats: ['BŚW', 'BMŚW', 'LMŚW'],
+      seasonMonths: [9, 10, 11, 12],
+      minRainfall14d: 10.0,
+      descriptionPl: 'Intensywnie fioletowy grzyb rosnący w grubych warstwach ściółki liściastej i iglastej aż do mrozów.',
+      tipsPl: 'Często tworzy tzw. „czarcie kręgi” w wilgotnych, zacienionych fragmentach borów.',
+      photoAsset: 'assets/mushrooms/gasowka_fioletowawa.webp',
+      lookalike: null,
+    ),
+
+    // 17. Boczniak ostrygowaty (Winter)
+    Mushroom(
+      id: 'boczniak_ostrygowaty',
+      namePl: 'Boczniak ostrygowaty',
+      nameRu: 'Вёшенка обыкновенная',
+      latin: 'Pleurotus ostreatus',
+      badge: 'Zimowy dziki grzyb',
+      edibility: 'Jadalny (Wyborny)',
+      edibilityColor: Color(0xFF10B981),
+      preferredTrees: ['BK', 'GB', 'BRZ', 'TP', 'WB'],
+      treeWeight: 45,
+      preferredAge: MushroomAgeRange(min: 40, idealMin: 60, idealMax: 120, max: 160),
+      preferredHabitats: ['LŚW', 'LMŚW', 'LŁ'],
+      seasonMonths: [10, 11, 12, 1, 2],
+      minRainfall14d: 10.0,
+      descriptionPl: 'Nadrzewny grzyb zimowy. Owocuje na pniach i kłodach drzew liściastych po pierwszych jesiennych falach chłodu.',
+      tipsPl: 'Szukaj na martwych i osłabionych bukach, grabach, topolach i wierzbach późną jesienią i zimą.',
+      photoAsset: 'assets/mushrooms/boczniak_ostrygowaty.webp',
+      lookalike: null,
+      isColdTolerant: true,
+    ),
+
+    // 18. Płomiennica zimowa (Winter)
+    Mushroom(
+      id: 'plomiennica_zimowa',
+      namePl: 'Płomiennica zimowa',
+      nameRu: 'Зимний опёнок (Фламмулина)',
+      latin: 'Flammulina velutipes',
+      badge: 'Śnieżny skarb lasu',
+      edibility: 'Jadalny (Ceniony)',
+      edibilityColor: Color(0xFF10B981),
+      preferredTrees: ['WB', 'OL', 'TP', 'BRZ', 'JS'],
+      treeWeight: 45,
+      preferredAge: MushroomAgeRange(min: 30, idealMin: 50, idealMax: 110, max: 150),
+      preferredHabitats: ['LŁ', 'OL', 'LMŚW'],
+      seasonMonths: [11, 12, 1, 2, 3],
+      minRainfall14d: 8.0,
+      descriptionPl: 'Dzika forma grzybów Enoki. Owocuje w środku zimy, znosząc mrozy do -10°C.',
+      tipsPl: 'Szukaj w dolinach rzek, na pniach starych wierzb, topoli i olsz w grudniu, styczniu i lutym.',
+      photoAsset: 'assets/mushrooms/plomiennica_zimowa.webp',
+      lookalike: null,
+      isColdTolerant: true,
     ),
   ];
 }

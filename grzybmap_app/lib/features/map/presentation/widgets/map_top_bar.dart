@@ -1,99 +1,101 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../forest_search/domain/models.dart';
+import '../../../forest_search/presentation/widgets/forest_search_bar.dart';
 
-/// Top bar with brand indicator and base map layer switcher button.
+/// Clean, floating top bar for the map screen.
+/// Features the brand info button and Nominatim/BDL forestry search capsule.
+/// Underneath the search bar is completely clean and empty by default.
 class MapTopBar extends StatelessWidget {
-  final String activeLayerLabel;
-  final VoidCallback onCycleLayer;
   final VoidCallback? onOpenAbout;
+  final bool isOfflineMode;
+  final VoidCallback? onOpenOfflineAreas;
+  final void Function(ForestSearchResult place) onSelectPlace;
 
   const MapTopBar({
     super.key,
-    required this.activeLayerLabel,
-    required this.onCycleLayer,
     this.onOpenAbout,
+    this.isOfflineMode = false,
+    this.onOpenOfflineAreas,
+    required this.onSelectPlace,
   });
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Brand Pill (tappable to view About / Rules screen)
-            GestureDetector(
-              onTap: onOpenAbout,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.surface.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: const Row(
-                  children: [
-                    Text('🍄', style: TextStyle(fontSize: 16)),
-                    SizedBox(width: 8),
-                    Text(
-                      'GrzybMap PL',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(width: 4),
-                    Icon(Icons.info_outline, size: 14, color: AppColors.textDim),
-                  ],
-                ),
-              ),
+            // Full-width search bar without distracting app badge
+            ForestSearchBar(
+              onSelectPlace: onSelectPlace,
             ),
 
-            // Layer Switcher Button with current layer label
-            GestureDetector(
-              onTap: onCycleLayer,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.surface.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.layers_outlined,
-                      size: 16,
-                      color: AppColors.emeraldNeon,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      activeLayerLabel,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+            // Optional: Offline Mode status badge if active
+            if (isOfflineMode) ...[
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: onOpenOfflineAreas,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F291E).withValues(alpha: 0.95),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                            color:
+                                AppColors.emeraldLight.withValues(alpha: 0.4)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.emeraldDeep.withValues(alpha: 0.3),
+                            blurRadius: 12,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: AppColors.emeraldLight,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'Tryb offline • Dane z pamięci telefonu (BDL)',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          const Text(
+                            'Zarządzaj ➔',
+                            style: TextStyle(
+                              color: AppColors.emeraldLight,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),

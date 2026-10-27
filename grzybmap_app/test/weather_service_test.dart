@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:grzybmap_app/features/weather/data/repositories/weather_repository_impl.dart';
-import 'package:grzybmap_app/features/weather/domain/models.dart';
 import 'package:grzybmap_app/features/weather/data/datasources/weather_remote_data_source.dart';
 import 'package:grzybmap_app/features/parcel_inspector/domain/models.dart';
 import 'package:grzybmap_app/features/mushroom_radar/service/match_engine.dart';
+
+import 'package:dio/dio.dart';
 
 class MockWeatherRemoteDataSource implements WeatherRemoteDataSource {
   final Map<String, dynamic>? responseData;
@@ -16,6 +17,7 @@ class MockWeatherRemoteDataSource implements WeatherRemoteDataSource {
   Future<Map<String, dynamic>> fetchRainfallJson({
     required double lat,
     required double lng,
+    CancelToken? cancelToken,
   }) async {
     if (shouldThrow) throw Exception('Network timeout or 500 error');
     return responseData ?? {};
@@ -69,11 +71,11 @@ void main() {
     });
 
     test('MatchEngine evaluates cleanly with null weather (honest fallback)', () {
-      final parcel = ForestParcel(
+      const parcel = ForestParcel(
         subareaId: '12-a',
         address: '01-02-12-a',
         inspectorate: 'Nadleśnictwo Celestynów',
-        primarySpecies: const TreeSpecies(
+        primarySpecies: TreeSpecies(
           code: 'SO',
           namePl: 'Sosna zwyczajna',
           nameRu: 'Сосна обыкновенная',
@@ -83,13 +85,13 @@ void main() {
         ),
         ageYears: 65,
         ageCategory: 'Dojrzały drzewostan (rębny)',
-        habitat: const ForestHabitat(
+        habitat: ForestHabitat(
           code: 'BŚW',
           namePl: 'Bór świeży',
           descPl: 'Umiarkowanie wilgotne podłoże piaszczyste',
           moisture: 'świeże',
         ),
-        status: const ForestStatus(
+        status: ForestStatus(
           code: 'GOSP',
           status: ForestLegalStatus.allowed,
           labelPl: 'Las gospodarczy — zbiór dozwolony',

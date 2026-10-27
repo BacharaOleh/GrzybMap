@@ -47,3 +47,13 @@ desktop.ini
 *.njsproj
 *.sln
 *.sw?
+
+# Android keystores & binaries
+*.apk
+*.aab
+*.jks
+*.keystore
+*.idsig
+
+# Scratch scripts
+take_screenshot.cjs

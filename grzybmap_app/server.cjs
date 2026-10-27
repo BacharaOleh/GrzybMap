@@ -15,12 +15,15 @@ const MIME_TYPES = {
   '.css': 'text/css',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
   '.ttf': 'font/ttf',
   '.otf': 'font/otf',
   '.woff': 'font/woff',
-  '.woff2': 'font/woff2'
+  '.woff2': 'font/woff2',
+  '.apk': 'application/vnd.android.package-archive'
 };
 
 const server = http.createServer((req, res) => {
@@ -40,6 +43,49 @@ const server = http.createServer((req, res) => {
   // Parse URL
   const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
   let pathname = parsedUrl.pathname;
+
+  // Proxy for BDL Export Tiles (Clean boundaries without text labels)
+  if (pathname.startsWith('/api/bdl-tiles')) {
+    const rawBbox = parsedUrl.searchParams.get('bbox') || parsedUrl.searchParams.get('BBOX') || '';
+    const dynLayers = JSON.stringify([{
+      id: 5,
+      source: { type: 'mapLayer', mapLayerId: 5 },
+      drawingInfo: { showLabels: false }
+    }]);
+
+    const targetUrl = `https://mapserver.bdl.lasy.gov.pl/ArcGIS/rest/services/WMS_BDL/MapServer/export?bbox=${encodeURIComponent(rawBbox)}&bboxSR=3857&imageSR=3857&size=256,256&format=png32&transparent=true&f=image&dynamicLayers=${encodeURIComponent(dynLayers)}`;
+
+    https.get(targetUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (proxyRes) => {
+      res.writeHead(proxyRes.statusCode, {
+        'Content-Type': 'image/png',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=86400'
+      });
+      proxyRes.pipe(res);
+    }).on('error', (err) => {
+      console.error('[BDL TILES ERROR]', err.message);
+      res.writeHead(502);
+      res.end();
+    });
+    return;
+  }
+
+  // Proxy for BDL ArcGIS REST Query (Mushroom radar parcels)
+  if (pathname.startsWith('/api/bdl-query')) {
+    const targetUrl = `https://mapserver.bdl.lasy.gov.pl/ArcGIS/rest/services/WMS_BDL/MapServer/5/query${parsedUrl.search}`;
+    https.get(targetUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (proxyRes) => {
+      res.writeHead(proxyRes.statusCode, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      proxyRes.pipe(res);
+    }).on('error', (err) => {
+      console.error('[BDL QUERY ERROR]', err.message);
+      res.writeHead(502);
+      res.end(JSON.stringify({ error: err.message }));
+    });
+    return;
+  }
 
   // Proxy for BDL WMS if requested via /api/bdl
   if (pathname.startsWith('/api/bdl')) {
@@ -91,6 +137,37 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Proxy for Geocoding via /api/search
+  if (pathname.startsWith('/api/search')) {
+    const q = parsedUrl.searchParams.get('q') || '';
+    const targetUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&countrycodes=pl&format=json&limit=6&addressdetails=1`;
+    const options = {
+      headers: {
+        'User-Agent': 'GrzybMap-App/1.0 (contact: grzybmap@lasy.pl)'
+      }
+    };
+    https.get(targetUrl, options, (proxyRes) => {
+      let body = '';
+      res.writeHead(proxyRes.statusCode, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      proxyRes.on('data', chunk => {
+        body += chunk;
+        res.write(chunk);
+      });
+      proxyRes.on('end', () => {
+        res.end();
+        console.log(`[SEARCH RES ${proxyRes.statusCode}] found for query: ${q}`);
+      });
+    }).on('error', (err) => {
+      console.error('[SEARCH PROXY ERROR]', err.message);
+      res.writeHead(502);
+      res.end(JSON.stringify({ error: err.message }));
+    });
+    return;
+  }
+
   if (pathname === '/' || pathname === '') {
     pathname = '/index.html';
   }
@@ -99,7 +176,15 @@ const server = http.createServer((req, res) => {
 
   fs.stat(filePath, (err, stats) => {
     if (err || !stats.isFile()) {
-      // Fallback to index.html for SPA routing
+      // If request has a static file extension (e.g. .js, .wasm, .png), return 404 rather than corrupting with HTML
+      const ext = path.extname(pathname);
+      if (ext && ext !== '.html') {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end(`File Not Found: ${pathname}`);
+        return;
+      }
+
+      // Fallback to index.html for SPA client-side routing
       const indexPath = path.join(WEB_DIR, 'index.html');
       fs.readFile(indexPath, (err, data) => {
         if (err) {
@@ -115,12 +200,21 @@ const server = http.createServer((req, res) => {
 
     const ext = path.extname(filePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    const responseHeaders = {
+      'Content-Type': contentType,
+      'Content-Length': stats.size,
+      'Accept-Ranges': 'bytes'
+    };
+    if (ext === '.apk') {
+      responseHeaders['Content-Disposition'] = 'attachment; filename="grzybmap.apk"';
+    }
 
-    res.writeHead(200, { 'Content-Type': contentType });
+    res.writeHead(200, responseHeaders);
     fs.createReadStream(filePath).pipe(res);
   });
 });
 
-server.listen(PORT, '127.0.0.1', () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`GrzybMap Flutter Web Server running at http://127.0.0.1:${PORT}`);
+  console.log(`Serving static files from: ${WEB_DIR}`);
 });

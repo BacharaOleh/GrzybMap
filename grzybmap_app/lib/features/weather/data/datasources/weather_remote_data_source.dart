@@ -5,6 +5,7 @@ abstract class WeatherRemoteDataSource {
   Future<Map<String, dynamic>> fetchRainfallJson({
     required double lat,
     required double lng,
+    CancelToken? cancelToken,
   });
 }
 
@@ -24,9 +25,13 @@ class WeatherRemoteDataSourceImpl implements WeatherRemoteDataSource {
   Future<Map<String, dynamic>> fetchRainfallJson({
     required double lat,
     required double lng,
+    CancelToken? cancelToken,
   }) async {
     final url = ApiConstants.openMeteoRainUrl(lat, lng);
-    final response = await _dio.get(url);
+    final response = await _dio.get<Map<String, dynamic>>(
+      url,
+      cancelToken: cancelToken,
+    );
     return response.data as Map<String, dynamic>;
   }
 }

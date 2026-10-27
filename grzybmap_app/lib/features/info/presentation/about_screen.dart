@@ -99,6 +99,19 @@ class AboutScreen extends StatelessWidget {
                 'Aplikacja jest asystentem i nie zastępuje wiedzy atlasowej. '
                 'Zwracaj szczególną uwagę na ostrzeżenia o trujących sobowtórach.',
           ),
+          const SizedBox(height: 14),
+
+          // Card 4: Zrzeczenie się odpowiedzialności (Legal Disclaimer)
+          _buildInfoSection(
+            icon: Icons.shield_outlined,
+            iconColor: const Color(0xFFEF4444),
+            title: 'Oświadczenie prawne i zrzeczenie się odpowiedzialności',
+            content:
+                '1. Aplikacja GrzybMap Polska ma charakter wyłącznie edukacyjno-informacyjny i modeluje prawdopodobieństwo na podstawie otwartych danych BDL i Open-Meteo.\n\n'
+                '2. Aplikacja NIE jest narzędziem diagnostycznym, nie zastępuje certyfikowanego mykologa i NIE daje 100% gwarancji jadalności znalezionych grzybów.\n\n'
+                '3. Spożycie gatunków silnie trujących (zwłaszcza Muchomora sromotnikowego) może prowadzić do zgonu lub trwałego inwalidztwa.\n\n'
+                '4. Twórcy aplikacji nie ponoszą jakiejkolwiek odpowiedzialności za zatrucia, błędy rozpoznania gatunków ani szkody wynikłe z niewłaściwego korzystania z aplikacji.',
+          ),
           const SizedBox(height: 24),
 
           // Footer
