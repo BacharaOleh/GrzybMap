@@ -117,7 +117,9 @@ class AboutScreen extends StatelessWidget {
           // Footer
           const Center(
             child: Text(
-              'Dane leśne: Bank Danych o Lasach (BDL)\nPogoda: Open-Meteo API',
+              'Dane leśne: Bank Danych o Lasach (BDL)\n'
+              'Dane pogodowe: Open-Meteo API\n'
+              'Fotografie atlasowe: Wikimedia Commons (CC-BY-SA / Public Domain)',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 11, color: AppColors.textDim, height: 1.5),
             ),
