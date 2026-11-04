@@ -7,6 +7,7 @@ import '../../../mushroom_radar/domain/models.dart';
 import '../../../mushroom_radar/service/match_engine.dart';
 import 'info_card.dart';
 import 'mushroom_photo_widget.dart';
+import 'mushroom_detail_sheet.dart';
 
 /// Modal bottom sheet presenting parcel details, weather data, and mushroom matches.
 class ParcelBottomSheet extends StatefulWidget {
@@ -17,6 +18,7 @@ class ParcelBottomSheet extends StatefulWidget {
   final VoidCallback? onSaveCarLocation;
   final VoidCallback? onSaveSecretSpot;
   final bool isOfflineCached;
+  final ValueChanged<String>? onSetTargetMushroom;
 
   const ParcelBottomSheet({
     super.key,
@@ -27,6 +29,7 @@ class ParcelBottomSheet extends StatefulWidget {
     this.onSaveCarLocation,
     this.onSaveSecretSpot,
     this.isOfflineCached = false,
+    this.onSetTargetMushroom,
   });
 
   /// Helper to show this bottom sheet modal.
@@ -39,6 +42,7 @@ class ParcelBottomSheet extends StatefulWidget {
     VoidCallback? onSaveCarLocation,
     VoidCallback? onSaveSecretSpot,
     bool isOfflineCached = false,
+    ValueChanged<String>? onSetTargetMushroom,
   }) {
     return showModalBottomSheet(
       context: context,
@@ -52,6 +56,7 @@ class ParcelBottomSheet extends StatefulWidget {
         onSaveCarLocation: onSaveCarLocation,
         onSaveSecretSpot: onSaveSecretSpot,
         isOfflineCached: isOfflineCached,
+        onSetTargetMushroom: onSetTargetMushroom,
       ),
     );
   }
@@ -123,6 +128,193 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
     return month >= 1 && month <= 12 ? months[month] : '';
   }
 
+  Widget _buildParcelInfoButton(BuildContext context, ForestParcel parcel) {
+    return Tooltip(
+      message: 'Informacje o wydzieleniu',
+      child: InkWell(
+        onTap: () => _showParcelIdentitySheet(context, parcel),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.06),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+          ),
+          alignment: Alignment.center,
+          child: const Icon(
+            Icons.info_outline_rounded,
+            size: 15,
+            color: AppColors.textMuted,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showParcelIdentitySheet(BuildContext context, ForestParcel parcel) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: const BoxDecoration(
+            color: AppColors.surfaceElevated,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border.fromBorderSide(
+              BorderSide(color: AppColors.emeraldNeon, width: 0.8),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black87,
+                blurRadius: 30,
+                offset: Offset(0, -4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 38,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: AppColors.emeraldNeon.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.emeraldNeon.withValues(alpha: 0.3)),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Text('🌲', style: TextStyle(fontSize: 20)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Wydzielenie: ${parcel.subareaId}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Nadleśnictwo ${parcel.inspectorate}',
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              color: AppColors.textDim,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      icon: const Icon(Icons.close_rounded, size: 20, color: AppColors.textDim),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.borderLight),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildIdentityItem('Drzewostan', '${parcel.primarySpecies.namePl} (${parcel.primarySpecies.sharePercent}%)'),
+                      const Divider(color: AppColors.borderLight, height: 14),
+                      _buildIdentityItem('Wiek drzew', '${parcel.ageYears} lat'),
+                      const Divider(color: AppColors.borderLight, height: 14),
+                      _buildIdentityItem('Faza rozwoju', parcel.ageCategory),
+                      if (parcel.areaHa != null) ...[
+                        const Divider(color: AppColors.borderLight, height: 14),
+                        _buildIdentityItem('Powierzchnia', parcel.areaHa!),
+                      ],
+                      const Divider(color: AppColors.borderLight, height: 14),
+                      _buildIdentityItem('Typ siedliska', parcel.habitat.namePl),
+                      const Divider(color: AppColors.borderLight, height: 14),
+                      _buildIdentityItem(
+                        'Status prawny',
+                        parcel.status.code == 'GOSP'
+                            ? '🟢 Zbiór dozwolony (Lasy Państwowe)'
+                            : '🔴 Zakaz zbioru (${parcel.status.labelPl})',
+                      ),
+                      const Divider(color: AppColors.borderLight, height: 14),
+                      _buildIdentityItem('Adres leśny BDL', parcel.address),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.emeraldDeep,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Rozumiem', style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildIdentityItem(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: AppColors.textDim),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final parcel = widget.parcel;
@@ -174,11 +366,11 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                                 color: AppColors.emeraldNeon,
                               ),
                               const SizedBox(width: 6),
-                              Expanded(
+                              Flexible(
                                 child: Text(
                                   '${parcel.primarySpecies.namePl} (${parcel.primarySpecies.sharePercent}%)',
                                   style: const TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 17,
                                     fontWeight: FontWeight.w800,
                                     color: Colors.white,
                                     letterSpacing: -0.2,
@@ -187,15 +379,9 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
+                              const SizedBox(width: 6),
+                              _buildParcelInfoButton(context, parcel),
                             ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Nadleśnictwo ${parcel.inspectorate} • ${parcel.ageYears} lat • Wydz. ${parcel.subareaId}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textMuted,
-                            ),
                           ),
                         ],
                       ),
