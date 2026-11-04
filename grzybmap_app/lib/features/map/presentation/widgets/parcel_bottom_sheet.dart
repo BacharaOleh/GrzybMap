@@ -550,47 +550,6 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 12),
-
-                // Age category info strip
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.card,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.borderLight),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.access_time,
-                        size: 14,
-                        color: AppColors.textDim,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          parcel.ageCategory,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textMuted,
-                          ),
-                        ),
-                      ),
-                      if (parcel.areaHa != null)
-                        Text(
-                          parcel.areaHa!,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textDim,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
                 const SizedBox(height: 10),
 
                 // U4: Technical forestry address spoiler
@@ -891,6 +850,14 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                 width: cardWidth,
                 child: _CarouselMushroomCard(
                   result: result,
+                  onTap: () {
+                    MushroomDetailSheet.show(
+                      context,
+                      mushroom: result.mushroom,
+                      matchResult: result,
+                      onSetTargetMushroom: widget.onSetTargetMushroom,
+                    );
+                  },
                   onShowLookalike: () =>
                       _showLookalikeComparison(context, result.mushroom),
                 ),
