@@ -90,25 +90,6 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
     });
   }
 
-  String _monthName(int month) {
-    const months = [
-      '',
-      'Styczeń',
-      'Luty',
-      'Marzec',
-      'Kwiecień',
-      'Maj',
-      'Czerwiec',
-      'Lipiec',
-      'Sierpień',
-      'Wrzesień',
-      'Październik',
-      'Listopad',
-      'Grudzień',
-    ];
-    return month >= 1 && month <= 12 ? months[month] : 'Sezon';
-  }
-
   String _shortMonthName(int month) {
     const months = [
       '',
@@ -459,94 +440,84 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                         ),
                       ],
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 3.5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.emeraldDeep.withValues(alpha: 0.35),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: AppColors.emeraldNeon.withValues(alpha: 0.35),
-                          width: 0.8,
-                        ),
-                      ),
-                      child: Text(
-                        _monthName(_selectedMonth),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppColors.emeraldNeon,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 16,
+                      color: AppColors.textDim.withValues(alpha: 0.7),
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
 
-                // Interactive Month Selector (1-12)
+                // Scored mushrooms list (Horizontal Mushroom Carousel)
+                _buildMushroomCarousel(context),
+
+                const SizedBox(height: 12),
+
+                // Interactive Month Selector (cyclically ordered starting with current month)
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
                   child: Row(
-                    children: List.generate(12, (index) {
-                      final m = index + 1;
-                      final isSelected = m == _selectedMonth;
-                      final isRealMonth = m == DateTime.now().month;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: InkWell(
-                          onTap: () => _onSelectMonth(m),
-                          borderRadius: BorderRadius.circular(8),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 180),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 11,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.emeraldDeep
-                                  : (isRealMonth
-                                      ? AppColors.card
-                                      : AppColors.surface),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isSelected
-                                    ? AppColors.emeraldNeon
-                                    : (isRealMonth
-                                        ? AppColors.borderLight
-                                        : Colors.white10),
-                                width: isSelected ? 1.5 : 1.0,
+                    children: () {
+                      final currentRealMonth = DateTime.now().month;
+                      final orderedMonths = List.generate(
+                        12,
+                        (index) => ((currentRealMonth - 1 + index) % 12) + 1,
+                      );
+                      return orderedMonths.map((m) {
+                        final isSelected = m == _selectedMonth;
+                        final isRealMonth = m == currentRealMonth;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: InkWell(
+                            onTap: () => _onSelectMonth(m),
+                            borderRadius: BorderRadius.circular(8),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 11,
+                                vertical: 6,
                               ),
-                            ),
-                            child: Text(
-                              _shortMonthName(m),
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: isSelected
-                                    ? FontWeight.w700
-                                    : (isRealMonth
-                                        ? FontWeight.w600
-                                        : FontWeight.normal),
+                              decoration: BoxDecoration(
                                 color: isSelected
-                                    ? Colors.white
+                                    ? AppColors.emeraldDeep
                                     : (isRealMonth
-                                        ? AppColors.textMain
-                                        : AppColors.textMuted),
+                                        ? AppColors.card
+                                        : AppColors.surface),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppColors.emeraldNeon
+                                      : (isRealMonth
+                                          ? AppColors.borderLight
+                                          : Colors.white10),
+                                  width: isSelected ? 1.5 : 1.0,
+                                ),
+                              ),
+                              child: Text(
+                                _shortMonthName(m),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : (isRealMonth
+                                          ? FontWeight.w600
+                                          : FontWeight.normal),
+                                  color: isSelected
+                                      ? Colors.white
+                                      : (isRealMonth
+                                          ? AppColors.textMain
+                                          : AppColors.textMuted),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      );
-                    }),
+                        );
+                      }).toList();
+                    }(),
                   ),
                 ),
-                const SizedBox(height: 12),
-
-                // Scored mushrooms list (Horizontal Mushroom Carousel)
-                _buildMushroomCarousel(context),
 
                 const SizedBox(height: 18),
 
@@ -839,35 +810,8 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section Header matching mockup: "🎯 PROGNOZA GRZYBOWA (Przesuń w prawo ➔)"
-        const Row(
-          children: [
-            Text('🎯', style: TextStyle(fontSize: 14)),
-            SizedBox(width: 6),
-            Text(
-              'PROGNOZA GRZYBOWA',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                letterSpacing: 0.5,
-              ),
-            ),
-            SizedBox(width: 6),
-            Text(
-              '(Przesuń w prawo ➔)',
-              style: TextStyle(
-                fontSize: 11,
-                color: AppColors.textDim,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-
         SizedBox(
-          height: 335,
+          height: 310,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
@@ -897,18 +841,30 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
         ),
         const SizedBox(height: 10),
 
-        // Indicator Dots matching mockup
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(
-            _currentMatches.length.clamp(1, 6),
-            (dotIndex) => Container(
-              width: dotIndex == 0 ? 16 : 6,
-              height: 6,
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              decoration: BoxDecoration(
-                color: dotIndex == 0 ? Colors.white : Colors.white24,
-                borderRadius: BorderRadius.circular(3),
+        // Minimalist horizontal scroll slider indicator
+        Center(
+          child: Container(
+            width: 44,
+            height: 3.5,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(2),
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                width: 18,
+                height: 3.5,
+                decoration: BoxDecoration(
+                  color: AppColors.emeraldNeon,
+                  borderRadius: BorderRadius.circular(2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.emeraldNeon.withValues(alpha: 0.5),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1178,45 +1134,14 @@ class _CarouselMushroomCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Large Top Photo with hint badge
-              Stack(
-                children: [
-                  MushroomPhotoWidget(
-                    assetPath: m.photoAsset,
-                    width: double.infinity,
-                    height: 160,
-                    borderRadius: 16,
-                    borderColor: Colors.white.withValues(alpha: 0.08),
-                    borderWidth: 1.0,
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.75),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.white24, width: 0.8),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.zoom_in_rounded, size: 12, color: Colors.white),
-                          SizedBox(width: 4),
-                          Text(
-                            'Atlas & foto',
-                            style: TextStyle(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+              // 1. Large Top Photo
+              MushroomPhotoWidget(
+                assetPath: m.photoAsset,
+                width: double.infinity,
+                height: 160,
+                borderRadius: 16,
+                borderColor: Colors.white.withValues(alpha: 0.08),
+                borderWidth: 1.0,
               ),
 
           const SizedBox(height: 10),
@@ -1299,16 +1224,24 @@ class _CarouselMushroomCard extends StatelessWidget {
 
           const SizedBox(height: 6),
 
-          // 3. Season Status Row
-          Text(
-            'Wysyp: ${result.chanceCategory}${result.positiveReasons.isNotEmpty ? ' • ${result.positiveReasons.first}' : ''}',
-            style: const TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-              color: Colors.white70,
+          // Minimalist expand chevron ("птичка" down)
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  width: 0.8,
+                ),
+              ),
+              child: const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 20,
+                color: AppColors.emeraldNeon,
+              ),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
 
           const Spacer(),
