@@ -14,6 +14,7 @@ class _RadarOptionMeta {
   final String id;
   final String icon;
   final String title;
+  final String subtitle;
   final String shortTag;
   final String detailedExplanation;
   final String whyItMatters;
@@ -24,6 +25,7 @@ class _RadarOptionMeta {
     required this.id,
     required this.icon,
     required this.title,
+    required this.subtitle,
     required this.shortTag,
     required this.detailedExplanation,
     required this.whyItMatters,
@@ -51,6 +53,7 @@ class RadarSettingsSheet extends ConsumerWidget {
       id: 'mushroom_name',
       icon: '🍄',
       title: 'Nazwa grzyba',
+      subtitle: 'Pokaż dominujący gatunek na plakietce',
       shortTag: 'Plakietka radaru',
       detailedExplanation:
           'Wyświetla nazwę najbardziej dopasowanego gatunku grzyba (np. Borowik, Pieprznik, Podgrzybek) bezpośrednio na plakietce radaru.',
@@ -63,49 +66,53 @@ class RadarSettingsSheet extends ConsumerWidget {
       id: 'tree_species',
       icon: '🌲',
       title: 'Gatunek i wiek lasu',
+      subtitle: 'Skrót drzewostanu BDL (np. So 65l)',
       shortTag: 'Dane BDL',
       detailedExplanation:
           'Wyświetla oficjalny skrót dominującego gatunku drzewa oraz wiek drzewostanu pobrany z Banku Danych o Lasach (BDL).',
       whyItMatters:
           'Klucz do sukcesu: prawdziwki i borowiki preferują starodrzew sosnowy i dębowy (50-90 lat), natomiast maślaki rosną w młodnikach sosnowych (do 20 lat).',
       exampleDisplay: 'Plakietka wyświetla: „🌲 So 65l” (Sosna 65 lat) lub „Db 80l” (Dąb 80 lat).',
-      accentColor: Color(0xFF34D399),
+      accentColor: AppColors.emeraldNeon,
     ),
     _RadarOptionMeta(
       id: 'low_probability',
       icon: '🔍',
       title: 'Miejsca o niskiej szansie (< 50%)',
+      subtitle: 'Pokaż słabsze sektory do dokładnej eksploracji',
       shortTag: 'Czułość radaru',
       detailedExplanation:
           'Odkrywa na mapie sektory leśne, gdzie szansa na zbiór wynosi poniżej 50%. Domyślnie filtr jest wyłączony, aby mapa była czytelna i skupiona na najlepszych miejscówkach.',
       whyItMatters:
           'Przydatne podczas suszy lub poza szczytem sezonu, kiedy zależy Ci na zbadaniu absolutnie każdego zakątka lasu, nawet z mniejszym potencjałem.',
       exampleDisplay: 'Pokazuje dodatkowe żółte i szare plakietki z prawdopodobieństwem 20% - 49%.',
-      accentColor: AppColors.goldAmber,
+      accentColor: AppColors.emeraldNeon,
     ),
     _RadarOptionMeta(
       id: 'rain_heatmap',
       icon: '🌧️',
       title: 'Mapa opadów (14 dni)',
+      subtitle: 'Suma opadów z dwóch tygodni (Open-Meteo)',
       shortTag: 'Warstwa Open-Meteo',
       detailedExplanation:
           'Nakłada na mapę termiczną warstwę sumarycznych opadów deszczu z ostatnich dwóch tygodni, pobieraną z modelu satelitarnego Open-Meteo.',
       whyItMatters:
           'Grzyby potrzebują 15-25 mm skumulowanego deszczu oraz 2-5 dni ciepła po opadzie, aby rozwinęła się grzybnia. Warstwa precyzyjnie wskazuje, gdzie dokładnie spadł deszcz.',
       exampleDisplay: 'Fioletowe i niebieskie strefy oznaczają lasy z obfitym nawodnieniem gleby.',
-      accentColor: AppColors.skyBlue,
+      accentColor: AppColors.emeraldNeon,
     ),
     _RadarOptionMeta(
       id: 'live_clouds',
       icon: '📡',
       title: 'Chmury deszczowe na żywo',
+      subtitle: 'Radar dopplerowski opadów w czasie rzeczywistym',
       shortTag: 'Radar dopplerowski',
       detailedExplanation:
           'Wyświetla dynamiczną warstwę radarową chmur i opadów w czasie rzeczywistym z sieci radarów RainViewer.',
       whyItMatters:
           'Bezpieczeństwo w terenie: pozwala sprawdzić, czy w stronę Twojego rejonu nie zbliża się gwałtowna burza lub ulewa.',
       exampleDisplay: 'Płynna animacja przemieszczania się komórek burzowych nad Polską.',
-      accentColor: Color(0xFF818CF8),
+      accentColor: AppColors.emeraldNeon,
     ),
   ];
 
@@ -129,6 +136,21 @@ class RadarSettingsSheet extends ConsumerWidget {
     final showLiveClouds = ref.watch(
       mapScreenProvider.select((s) => s.showLiveRadarCloudLayer),
     );
+
+    final optionValues = [
+      showMushroom,
+      showTree,
+      showLowProbability,
+      showRainRadar,
+      showLiveClouds,
+    ];
+    final optionCallbacks = [
+      (bool v) => ref.read(mapScreenProvider.notifier).toggleRadarMushroomName(),
+      (bool v) => ref.read(mapScreenProvider.notifier).toggleRadarTreeSpecies(),
+      (bool v) => ref.read(mapScreenProvider.notifier).toggleLowProbabilityRadars(),
+      (bool v) => ref.read(mapScreenProvider.notifier).toggleRainRadarLayer(),
+      (bool v) => ref.read(mapScreenProvider.notifier).toggleLiveRadarClouds(),
+    ];
 
     Mushroom? selectedMushroom;
     if (targetMushroomId != null) {
@@ -177,49 +199,55 @@ class RadarSettingsSheet extends ConsumerWidget {
               ),
             ),
 
-            // Header
+            // Header (Clean, minimal, no emoji salad)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: AppColors.emeraldNeon.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
+                      Text(
+                        'Widok Plakietek Radaru',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.1,
                         ),
-                        alignment: Alignment.center,
-                        child: const Text('⚙️', style: TextStyle(fontSize: 16)),
                       ),
-                      const SizedBox(width: 10),
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Widok Plakietek Radaru',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                          Text(
-                            'Dostosuj szczegółowość i cel radaru na mapie',
-                            style: TextStyle(fontSize: 11, color: AppColors.textDim),
-                          ),
-                        ],
+                      SizedBox(height: 2),
+                      Text(
+                        'Dostosuj szczegółowość i cel radaru na mapie',
+                        style: TextStyle(fontSize: 11, color: AppColors.textDim),
                       ),
                     ],
                   ),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded, size: 20, color: AppColors.textDim),
-                    visualDensity: VisualDensity.compact,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        onPressed: () => _showTargetMushroomHelp(context),
+                        tooltip: 'Jak działa radar?',
+                        icon: const Icon(
+                          Icons.help_outline_rounded,
+                          size: 20,
+                          color: AppColors.textMuted,
+                        ),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        tooltip: 'Zamknij',
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          size: 20,
+                          color: AppColors.textDim,
+                        ),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -234,23 +262,16 @@ class RadarSettingsSheet extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Live Preview Card (Tactical HUD)
+                    // Live Preview Stage (Ambient HUD showcase)
                     Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F1A13),
-                        borderRadius: BorderRadius.circular(16),
+                        color: const Color(0xFF0C140F),
+                        borderRadius: BorderRadius.circular(18),
                         border: Border.all(
-                          color: AppColors.emeraldNeon.withValues(alpha: 0.25),
-                          width: 1,
+                          color: Colors.white.withValues(alpha: 0.07),
+                          width: 0.8,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.emeraldNeon.withValues(alpha: 0.05),
-                            blurRadius: 12,
-                            spreadRadius: 1,
-                          ),
-                        ],
                       ),
                       child: Column(
                         children: [
@@ -258,15 +279,15 @@ class RadarSettingsSheet extends ConsumerWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Container(
-                                width: 6,
-                                height: 6,
+                                width: 5,
+                                height: 5,
                                 decoration: const BoxDecoration(
                                   color: AppColors.emeraldNeon,
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
                                       color: AppColors.emeraldNeon,
-                                      blurRadius: 6,
+                                      blurRadius: 4,
                                       spreadRadius: 1,
                                     ),
                                   ],
@@ -274,17 +295,17 @@ class RadarSettingsSheet extends ConsumerWidget {
                               ),
                               const SizedBox(width: 6),
                               const Text(
-                                'PODGLĄD NA ŻYWO NA MAPIE',
+                                'PODGLĄD ZNACZNIKA NA MAPIE',
                                 style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: 9.5,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.emeraldNeon,
-                                  letterSpacing: 1.0,
+                                  letterSpacing: 0.9,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 12),
                           Center(
                             child: MushroomGaugeBadge(
                               probability: 85,
@@ -296,7 +317,7 @@ class RadarSettingsSheet extends ConsumerWidget {
                               onTap: () {},
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
                           const Text(
                             'Tak będą wyglądać znaczniki w Twoim rejonie lasu',
                             style: TextStyle(fontSize: 10.5, color: AppColors.textDim),
@@ -306,8 +327,8 @@ class RadarSettingsSheet extends ConsumerWidget {
                     ),
                     const SizedBox(height: 14),
 
-                    // Section 1: Target Mushroom (With Search)
-                    _buildTargetMushroomCard(
+                    // Section 1: Target Mushroom (Sleek Native Picker Tile)
+                    _buildTargetMushroomTile(
                       context,
                       ref,
                       selectedMushroom,
@@ -315,54 +336,11 @@ class RadarSettingsSheet extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
 
-                    // Section 2: Clean Laconic Option Toggles
-                    _buildOptionRow(
-                      context: context,
-                      meta: _options[0], // Mushroom name
-                      value: showMushroom,
-                      onToggle: (val) => ref
-                          .read(mapScreenProvider.notifier)
-                          .toggleRadarMushroomName(),
-                    ),
-                    const SizedBox(height: 8),
-
-                    _buildOptionRow(
-                      context: context,
-                      meta: _options[1], // Tree species & age
-                      value: showTree,
-                      onToggle: (val) => ref
-                          .read(mapScreenProvider.notifier)
-                          .toggleRadarTreeSpecies(),
-                    ),
-                    const SizedBox(height: 8),
-
-                    _buildOptionRow(
-                      context: context,
-                      meta: _options[2], // Low probability
-                      value: showLowProbability,
-                      onToggle: (val) => ref
-                          .read(mapScreenProvider.notifier)
-                          .toggleLowProbabilityRadars(),
-                    ),
-                    const SizedBox(height: 8),
-
-                    _buildOptionRow(
-                      context: context,
-                      meta: _options[3], // Rain heatmap
-                      value: showRainRadar,
-                      onToggle: (val) => ref
-                          .read(mapScreenProvider.notifier)
-                          .toggleRainRadarLayer(),
-                    ),
-                    const SizedBox(height: 8),
-
-                    _buildOptionRow(
-                      context: context,
-                      meta: _options[4], // Live radar clouds
-                      value: showLiveClouds,
-                      onToggle: (val) => ref
-                          .read(mapScreenProvider.notifier)
-                          .toggleLiveRadarClouds(),
+                    // Section 2: Grouped Inset Settings Container (Apple/Linear-style)
+                    _buildGroupedSettings(
+                      context,
+                      optionValues,
+                      optionCallbacks,
                     ),
                     const SizedBox(height: 16),
                   ],
@@ -378,28 +356,23 @@ class RadarSettingsSheet extends ConsumerWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.emeraldDeep,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                  elevation: 4,
-                  shadowColor: AppColors.emeraldDeep.withValues(alpha: 0.5),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
-                    side: const BorderSide(color: AppColors.emeraldNeon, width: 0.9),
+                    side: BorderSide(
+                      color: AppColors.emeraldNeon.withValues(alpha: 0.55),
+                      width: 1.0,
+                    ),
                   ),
                 ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.check_rounded, size: 18),
-                    SizedBox(width: 8),
-                    Text(
-                      'Zastosuj i zamknij',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ],
+                child: const Text(
+                  'Gotowe',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
+                  ),
                 ),
               ),
             ),
@@ -409,8 +382,8 @@ class RadarSettingsSheet extends ConsumerWidget {
     );
   }
 
-  /// Target mushroom card with clear search trigger and active target display.
-  Widget _buildTargetMushroomCard(
+  /// Sleek Native Picker Tile for Target Mushroom (1 level of nesting, zero clutter).
+  Widget _buildTargetMushroomTile(
     BuildContext context,
     WidgetRef ref,
     Mushroom? mushroom,
@@ -424,277 +397,220 @@ class RadarSettingsSheet extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: hasTarget
-              ? AppColors.emeraldNeon.withValues(alpha: 0.5)
-              : AppColors.border,
-          width: hasTarget ? 1.2 : 0.8,
+              ? AppColors.emeraldNeon.withValues(alpha: 0.45)
+              : Colors.white.withValues(alpha: 0.08),
+          width: 0.8,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header of card
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 10, 6),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () async {
+            final selectedId = await MushroomSearchSheet.show(
+              context,
+              currentTargetId: currentId,
+            );
+            if (selectedId != null) {
+              if (selectedId == '__ALL__') {
+                ref.read(mapScreenProvider.notifier).setTargetMushroom(null);
+              } else {
+                ref.read(mapScreenProvider.notifier).setTargetMushroom(selectedId);
+              }
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
-                  children: [
-                    Text('🎯', style: TextStyle(fontSize: 15)),
-                    SizedBox(width: 8),
-                    Text(
-                      'Cel poszukiwań radaru',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                if (hasTarget)
+                  MushroomPhotoWidget(
+                    assetPath: mushroom.photoAsset,
+                    fallbackEmoji: mushroom.badge,
+                    size: 38,
+                    borderRadius: 10,
+                    borderColor: AppColors.emeraldNeon.withValues(alpha: 0.5),
+                  )
+                else
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: AppColors.emeraldNeon.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppColors.emeraldNeon.withValues(alpha: 0.25),
+                        width: 0.8,
                       ),
                     ),
-                  ],
+                    alignment: Alignment.center,
+                    child: const Text('🎯', style: TextStyle(fontSize: 18)),
+                  ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Cel poszukiwań radaru',
+                        style: TextStyle(
+                          color: AppColors.textDim,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        hasTarget
+                            ? mushroom.namePl
+                            : 'Wszystkie gatunki (Tryb ogólny)',
+                        style: TextStyle(
+                          color: hasTarget ? AppColors.emeraldNeon : Colors.white,
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
-                _buildInfoIconButton(
-                  context: context,
-                  onTap: () => _showTargetMushroomHelp(context),
-                  tooltip: 'O celu poszukiwań',
+                if (hasTarget)
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.textDim),
+                    tooltip: 'Resetuj cel',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
+                      ref.read(mapScreenProvider.notifier).setTargetMushroom(null);
+                    },
+                  ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: AppColors.textDim,
                 ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
 
-          // Interactive Selector Card
-          InkWell(
-            onTap: () async {
-              final selectedId = await MushroomSearchSheet.show(
-                context,
-                currentTargetId: currentId,
-              );
-              if (selectedId != null) {
-                if (selectedId == '__ALL__') {
-                  ref.read(mapScreenProvider.notifier).setTargetMushroom(null);
-                } else {
-                  ref.read(mapScreenProvider.notifier).setTargetMushroom(selectedId);
-                }
-              }
-            },
-            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.card,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.borderLight),
+  /// Unified Grouped Inset Container for all radar toggles (Apple/Linear-style).
+  Widget _buildGroupedSettings(
+    BuildContext context,
+    List<bool> values,
+    List<ValueChanged<bool>> callbacks,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.08),
+          width: 0.8,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (int i = 0; i < _options.length; i++) ...[
+            if (i > 0)
+              Divider(
+                height: 1,
+                thickness: 0.8,
+                indent: 58,
+                endIndent: 14,
+                color: Colors.white.withValues(alpha: 0.05),
               ),
-              child: Row(
-                children: [
-                  if (hasTarget)
-                    MushroomPhotoWidget(
-                      assetPath: mushroom.photoAsset,
-                      fallbackEmoji: mushroom.badge,
-                      size: 38,
-                      borderRadius: 10,
-                      borderColor: AppColors.emeraldNeon.withValues(alpha: 0.6),
-                    )
-                  else
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: AppColors.goldAmber.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.goldAmber.withValues(alpha: 0.3)),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Text('✨', style: TextStyle(fontSize: 18)),
-                    ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          hasTarget
-                              ? mushroom.namePl
-                              : 'Wszystkie gatunki (Tryb ogólny)',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          hasTarget
-                              ? '${mushroom.latin} • 🌲 ${mushroom.preferredTrees.join(", ")}'
-                              : 'Kliknij, aby wyszukać i wybrać konkretnego grzyba',
-                          style: const TextStyle(
-                            color: AppColors.textDim,
-                            fontSize: 10.5,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  if (hasTarget)
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.textMuted),
-                      tooltip: 'Wróć do wszystkich gatunków',
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () {
-                        ref.read(mapScreenProvider.notifier).setTargetMushroom(null);
-                      },
-                    ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.emeraldNeon.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.emeraldNeon.withValues(alpha: 0.4)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.search_rounded, size: 14, color: AppColors.emeraldNeon),
-                        SizedBox(width: 4),
-                        Text(
-                          'Szukaj',
-                          style: TextStyle(
-                            color: AppColors.emeraldNeon,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+            _buildOptionItem(
+              context: context,
+              meta: _options[i],
+              value: values[i],
+              onToggle: callbacks[i],
             ),
-          ),
+          ],
         ],
       ),
     );
   }
 
-  /// Compact, laconic option row without noisy subtitles.
-  /// Subtitle explanations are hidden behind the aesthetic info button [ ℹ️ ].
-  Widget _buildOptionRow({
+  /// Clean, laconic option row without noisy individual borders or (i) buttons.
+  Widget _buildOptionItem({
     required BuildContext context,
     required _RadarOptionMeta meta,
     required bool value,
     required ValueChanged<bool> onToggle,
   }) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      decoration: BoxDecoration(
-        color: value
-            ? AppColors.surface.withValues(alpha: 0.95)
-            : AppColors.surface.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: value
-              ? meta.accentColor.withValues(alpha: 0.4)
-              : AppColors.borderLight,
-          width: value ? 1.0 : 0.8,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          onTap: () => onToggle(!value),
-          borderRadius: BorderRadius.circular(14),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                // Icon Box
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: value
-                        ? meta.accentColor.withValues(alpha: 0.15)
-                        : Colors.white.withValues(alpha: 0.04),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: value
-                          ? meta.accentColor.withValues(alpha: 0.3)
-                          : Colors.transparent,
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(meta.icon, style: const TextStyle(fontSize: 18)),
-                ),
-                const SizedBox(width: 10),
-
-                // Title
-                Expanded(
-                  child: Text(
-                    meta.title,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-
-                // Info Icon Button (Pops up rich explanation dialog)
-                _buildInfoIconButton(
-                  context: context,
-                  onTap: () => _showOptionInfoSheet(context, meta, value, onToggle),
-                  tooltip: 'Szczegóły opcji ${meta.title}',
-                ),
-                const SizedBox(width: 4),
-
-                // Modern Switch
-                Switch.adaptive(
-                  value: value,
-                  onChanged: onToggle,
-                  activeThumbColor: meta.accentColor,
-                  activeTrackColor: meta.accentColor.withValues(alpha: 0.25),
-                  inactiveThumbColor: AppColors.textDim,
-                  inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Aesthetic info icon button [ ℹ️ ] with smooth touch target.
-  Widget _buildInfoIconButton({
-    required BuildContext context,
-    required VoidCallback onTap,
-    required String tooltip,
-  }) {
-    return Tooltip(
-      message: tooltip,
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-          ),
-          alignment: Alignment.center,
-          child: const Icon(
-            Icons.info_outline_rounded,
-            size: 15,
-            color: AppColors.textMuted,
+        onTap: () => onToggle(!value),
+        onLongPress: () => _showOptionInfoSheet(context, meta, value, onToggle),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            children: [
+              // Refined Leading Icon
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: value
+                      ? AppColors.emeraldNeon.withValues(alpha: 0.12)
+                      : Colors.white.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(
+                    color: value
+                        ? AppColors.emeraldNeon.withValues(alpha: 0.25)
+                        : Colors.transparent,
+                    width: 0.8,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(meta.icon, style: const TextStyle(fontSize: 16)),
+              ),
+              const SizedBox(width: 12),
+
+              // Title + Subtitle Column
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      meta.title,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 1.5),
+                    Text(
+                      meta.subtitle,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textDim,
+                        height: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Switch (Unified Emerald Neon)
+              Switch.adaptive(
+                value: value,
+                onChanged: onToggle,
+                activeThumbColor: AppColors.emeraldNeon,
+                activeTrackColor: AppColors.emeraldNeon.withValues(alpha: 0.3),
+                inactiveThumbColor: AppColors.textDim,
+                inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ],
           ),
         ),
       ),
