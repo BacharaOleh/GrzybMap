@@ -243,6 +243,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             mushroomMatches: state.mushroomMatches,
             currentMonth: state.selectedMonth,
             isOfflineCached: state.isOfflineData,
+            onSetTargetMushroom: (id) =>
+                ref.read(mapScreenProvider.notifier).setTargetMushroom(id),
             onSaveSecretSpot: () {
               SaveSpotDialog.show(
                 context: context,

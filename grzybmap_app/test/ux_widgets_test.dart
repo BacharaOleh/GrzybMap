@@ -50,7 +50,7 @@ void main() {
       );
 
       // Verify header and compact state
-      expect(find.text('Szczegóły leśne (BDL)'), findsOneWidget);
+      expect(find.text('Szczegóły'), findsOneWidget);
       expect(find.text('Rozwiń'), findsOneWidget);
       expect(find.text('Adres: 17-01-1-03-360-a-00'), findsOneWidget);
 

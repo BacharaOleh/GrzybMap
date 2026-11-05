@@ -438,7 +438,135 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
+
+                // === 1. MUSHROOM RADAR (HERO SECTION) ===
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Text('🍄', style: TextStyle(fontSize: 16)),
+                        SizedBox(width: 6),
+                        Text(
+                          'RADAR GRZYBIARZA',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.6,
+                            color: AppColors.emeraldNeon,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 3.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.emeraldDeep.withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.emeraldNeon.withValues(alpha: 0.35),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Text(
+                        _monthName(_selectedMonth),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.emeraldNeon,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // Interactive Month Selector (1-12)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: List.generate(12, (index) {
+                      final m = index + 1;
+                      final isSelected = m == _selectedMonth;
+                      final isRealMonth = m == DateTime.now().month;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: InkWell(
+                          onTap: () => _onSelectMonth(m),
+                          borderRadius: BorderRadius.circular(8),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 11,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.emeraldDeep
+                                  : (isRealMonth
+                                      ? AppColors.card
+                                      : AppColors.surface),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppColors.emeraldNeon
+                                    : (isRealMonth
+                                        ? AppColors.borderLight
+                                        : Colors.white10),
+                                width: isSelected ? 1.5 : 1.0,
+                              ),
+                            ),
+                            child: Text(
+                              _shortMonthName(m),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: isSelected
+                                    ? FontWeight.w700
+                                    : (isRealMonth
+                                        ? FontWeight.w600
+                                        : FontWeight.normal),
+                                color: isSelected
+                                    ? Colors.white
+                                    : (isRealMonth
+                                        ? AppColors.textMain
+                                        : AppColors.textMuted),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Scored mushrooms list (Horizontal Mushroom Carousel)
+                _buildMushroomCarousel(context),
+
+                const SizedBox(height: 18),
+
+                // === 2. FOREST BIOTOPE & WEATHER CONDITIONS ===
+                const Row(
+                  children: [
+                    Text('🌲', style: TextStyle(fontSize: 14)),
+                    SizedBox(width: 6),
+                    Text(
+                      'WARUNKI LEŚNE I POGODA',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textDim,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
 
                 // Habitat + Weather cards
                 Row(
@@ -552,106 +680,8 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                 ],
                 const SizedBox(height: 10),
 
-                // U4: Technical forestry address spoiler
+                // === 3. FORESTRY DETAILS SPOILER ===
                 ForestDetailsSpoiler(parcel: parcel),
-                const SizedBox(height: 18),
-
-                // === MUSHROOM RADAR HEADER ===
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      '🍄 RADAR GRZYBIARZA',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
-                        color: AppColors.emeraldNeon,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.card,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        _monthName(_selectedMonth),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppColors.emeraldNeon,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                // Interactive Month Selector (1-12)
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: List.generate(12, (index) {
-                      final m = index + 1;
-                      final isSelected = m == _selectedMonth;
-                      final isRealMonth = m == DateTime.now().month;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: GestureDetector(
-                          onTap: () => _onSelectMonth(m),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 11,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.emeraldDeep
-                                  : (isRealMonth
-                                      ? AppColors.card
-                                      : AppColors.surface),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isSelected
-                                    ? AppColors.emeraldNeon
-                                    : (isRealMonth
-                                        ? AppColors.borderLight
-                                        : Colors.white10),
-                                width: isSelected ? 1.5 : 1.0,
-                              ),
-                            ),
-                            child: Text(
-                              _shortMonthName(m),
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: isSelected
-                                    ? FontWeight.w700
-                                    : (isRealMonth
-                                        ? FontWeight.w600
-                                        : FontWeight.normal),
-                                color: isSelected
-                                    ? Colors.white
-                                    : (isRealMonth
-                                        ? AppColors.textMain
-                                        : AppColors.textMuted),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Scored mushrooms list
-                // Horizontal Mushroom Carousel (~74% width per card with peeking next card)
-                _buildMushroomCarousel(context),
-
                 const SizedBox(height: 18),
 
                 // Clean Bottom Action Button matching mockup: "🧭 Nawiguj do tego wydziału"
@@ -1101,10 +1131,12 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
 
 class _CarouselMushroomCard extends StatelessWidget {
   final MushroomMatchResult result;
+  final VoidCallback onTap;
   final VoidCallback onShowLookalike;
 
   const _CarouselMushroomCard({
     required this.result,
+    required this.onTap,
     required this.onShowLookalike,
   });
 
@@ -1114,42 +1146,78 @@ class _CarouselMushroomCard extends StatelessWidget {
     final lookalike = m.lookalike;
     final hasLethalLookalike = lookalike != null && lookalike.isLethal;
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF141F16),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: hasLethalLookalike
-              ? AppColors.danger.withValues(alpha: 0.7)
-              : (lookalike != null
-                  ? AppColors.goldAmber.withValues(alpha: 0.5)
-                  : AppColors.emeraldNeon.withValues(alpha: 0.55)),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: (hasLethalLookalike
-                    ? AppColors.danger
-                    : AppColors.emeraldNeon)
-                .withValues(alpha: 0.20),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF141F16),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: hasLethalLookalike
+                  ? AppColors.danger.withValues(alpha: 0.7)
+                  : (lookalike != null
+                      ? AppColors.goldAmber.withValues(alpha: 0.5)
+                      : AppColors.emeraldNeon.withValues(alpha: 0.55)),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: (hasLethalLookalike
+                        ? AppColors.danger
+                        : AppColors.emeraldNeon)
+                    .withValues(alpha: 0.20),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. Large Top Photo (Full Width, Height 160)
-          MushroomPhotoWidget(
-            assetPath: m.photoAsset,
-            width: double.infinity,
-            height: 160,
-            borderRadius: 16,
-            borderColor: Colors.white.withValues(alpha: 0.08),
-            borderWidth: 1.0,
-          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Large Top Photo with hint badge
+              Stack(
+                children: [
+                  MushroomPhotoWidget(
+                    assetPath: m.photoAsset,
+                    width: double.infinity,
+                    height: 160,
+                    borderRadius: 16,
+                    borderColor: Colors.white.withValues(alpha: 0.08),
+                    borderWidth: 1.0,
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.75),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white24, width: 0.8),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.zoom_in_rounded, size: 12, color: Colors.white),
+                          SizedBox(width: 4),
+                          Text(
+                            'Atlas & foto',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
 
           const SizedBox(height: 10),
 
@@ -1341,7 +1409,9 @@ class _CarouselMushroomCard extends StatelessWidget {
           ],
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 }
 
@@ -1401,7 +1471,7 @@ class _ForestDetailsSpoilerState extends State<ForestDetailsSpoiler> {
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
-                        'Szczegóły leśne (BDL)',
+                        'Szczegóły',
                         style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
@@ -1472,6 +1542,11 @@ class _ForestDetailsSpoilerState extends State<ForestDetailsSpoiler> {
                         _buildDetailRow(
                           label: 'Wydzielenie',
                           value: parcel.subareaId,
+                        ),
+                        const SizedBox(height: 8),
+                        _buildDetailRow(
+                          label: 'Wiek i faza',
+                          value: '${parcel.ageYears} lat (${parcel.ageCategory})',
                         ),
                         const SizedBox(height: 8),
                         _buildDetailRow(
