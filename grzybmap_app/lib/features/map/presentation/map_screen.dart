@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -499,10 +500,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               if (showParcelRadars && parcelRadars.isNotEmpty)
                 MarkerLayer(
                   markers: parcelRadars.map((item) {
+                    final markerWidth = item.isHero
+                        ? (radarMarkerWidth + (item.nearbyCount > 0 ? 24 : 0))
+                        : 48.0;
+                    final markerHeight = item.isHero ? 30.0 : 22.0;
+
                     return Marker(
                       point: item.centroid,
-                      width: radarMarkerWidth,
-                      height: 30,
+                      width: markerWidth,
+                      height: markerHeight,
                       alignment: Alignment.center,
                       child: RepaintBoundary(
                         child: MushroomGaugeBadge(
@@ -512,6 +518,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           ageYears: item.ageYears,
                           showMushroomName: showRadarMushroomName,
                           showTreeSpecies: showRadarTreeSpecies,
+                          nearbyCount: item.nearbyCount,
+                          isHero: item.isHero,
                           onTap: () => _onTapMap(item.centroid),
                           onLongPress: () => RadarSettingsSheet.show(context),
                         ),
@@ -931,6 +939,76 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   content: Text('🧭 Zorientowano mapę na Północ (0°)'),
                   backgroundColor: AppColors.emeraldDeep,
                   duration: Duration(seconds: 1),
+                ),
+              );
+            },
+          ),
+
+          // Quick Radar Toggle Button (1-tap to show/hide all radar markers)
+          Consumer(
+            builder: (context, ref, _) {
+              final showRadars = ref.watch(
+                mapScreenProvider.select((s) => s.showParcelRadars),
+              );
+
+              return Positioned(
+                bottom: 168,
+                right: 16,
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    ref.read(mapScreenProvider.notifier).toggleParcelRadars();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          !showRadars
+                              ? '🍄 Włączono radar grzybów'
+                              : '👁️ Ukryto radar (czysty widok mapy)',
+                        ),
+                        backgroundColor: !showRadars
+                            ? AppColors.emeraldDeep
+                            : AppColors.surfaceElevated,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: BackdropFilter(
+                      filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: showRadars
+                              ? const Color(0xFF0C2417).withValues(alpha: 0.92)
+                              : AppColors.surfaceElevated.withValues(alpha: 0.88),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: showRadars
+                                ? AppColors.emeraldNeon.withValues(alpha: 0.85)
+                                : AppColors.border,
+                            width: showRadars ? 1.5 : 1.0,
+                          ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black38,
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          showRadars ? '🍄' : '👁️',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: showRadars ? Colors.white : AppColors.textDim,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               );
             },

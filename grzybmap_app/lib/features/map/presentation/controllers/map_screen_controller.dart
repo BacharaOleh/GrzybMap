@@ -629,7 +629,17 @@ class MapScreenNotifier extends StateNotifier<MapScreenState> {
           }
         }
       }
-      state = state.copyWith(parcelRadars: localRadars);
+      final limit = zoom < 14.5 ? 10 : (zoom < 16.0 ? 18 : 25);
+      final minProb = state.showLowProbabilityRadars ? 30 : 60;
+
+      state = state.copyWith(
+        parcelRadars: ParcelRadarService.clusterAndThinRadars(
+          items: localRadars,
+          zoom: zoom,
+          minProbability: minProb,
+          maxLimit: limit,
+        ),
+      );
       return;
     }
 
@@ -651,6 +661,9 @@ class MapScreenNotifier extends StateNotifier<MapScreenState> {
         } catch (_) {}
       }
 
+      final limit = zoom < 14.5 ? 10 : (zoom < 16.0 ? 18 : 25);
+      final minProb = state.showLowProbabilityRadars ? 30 : 60;
+
       final items = await _parcelRadarService.fetchVisibleRadars(
         minLat: bounds.south,
         minLng: bounds.west,
@@ -659,6 +672,9 @@ class MapScreenNotifier extends StateNotifier<MapScreenState> {
         weather: currentWeather,
         selectedMonth: state.selectedMonth,
         targetMushroomId: state.targetMushroomId,
+        zoom: zoom,
+        minProbability: minProb,
+        maxLimit: limit,
         cancelToken: _activeRadarCancelToken,
       );
 

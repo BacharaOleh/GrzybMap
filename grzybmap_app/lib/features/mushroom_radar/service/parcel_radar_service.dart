@@ -11,10 +11,102 @@ import '../domain/models.dart';
 import '../domain/parcel_radar.dart';
 import 'match_engine.dart';
 
+class _MutableCluster {
+  final ParcelRadarItem representative;
+  int count;
+
+  _MutableCluster({required this.representative, required this.count});
+}
+
 class ParcelRadarService {
   final Dio _dio;
+  final Map<String, List<ParcelRadarItem>> _lruCache = {};
 
   ParcelRadarService({Dio? dio}) : _dio = dio ?? Dio();
+
+  void clearCache() {
+    _lruCache.clear();
+  }
+
+  /// Spatial Grid & Non-Maximum Suppression (NMS) algorithm.
+  /// Eliminates badge overlap and visual clutter by grouping parcels that are too close
+  /// on screen into a single high-priority representative marker with nearby count.
+  static List<ParcelRadarItem> clusterAndThinRadars({
+    required List<ParcelRadarItem> items,
+    required double zoom,
+    int minProbability = 50,
+    int maxLimit = 20,
+    double minPixelDistance = 75.0,
+  }) {
+    if (items.isEmpty) return const [];
+
+    // 1. Filter by minimum probability threshold
+    final filtered =
+        items.where((it) => it.probabilityPercent >= minProbability).toList();
+    if (filtered.isEmpty) return const [];
+
+    // 2. Sort by prominence score:
+    // Stand area (ha) combined with probability ensures large productive forests
+    // are favored over tiny roadside ditch fragments.
+    filtered.sort((a, b) {
+      final areaBonusA = min(a.areaHa, 20.0) * 0.75;
+      final areaBonusB = min(b.areaHa, 20.0) * 0.75;
+      final scoreA = a.probabilityPercent + areaBonusA;
+      final scoreB = b.probabilityPercent + areaBonusB;
+      return scoreB.compareTo(scoreA);
+    });
+
+    // 3. Dynamic degree threshold based on zoom level:
+    // In Web Mercator at Poland's latitude (52 deg), 1 pixel is ~ (360 / (256 * 2^zoom)) deg lon.
+    final degPerPixelLon = 360.0 / (256.0 * pow(2.0, zoom));
+    final degPerPixelLat = degPerPixelLon * 0.615; // cos(52°) ≈ 0.615
+
+    final minLonDistance = degPerPixelLon * minPixelDistance;
+    final minLatDistance = degPerPixelLat * (minPixelDistance * 0.55);
+
+    final accepted = <_MutableCluster>[];
+
+    for (final item in filtered) {
+      _MutableCluster? nearbyCluster;
+
+      for (final cl in accepted) {
+        final dLat =
+            (item.centroid.latitude - cl.representative.centroid.latitude).abs();
+        final dLon =
+            (item.centroid.longitude - cl.representative.centroid.longitude).abs();
+
+        if (dLat < minLatDistance && dLon < minLonDistance) {
+          nearbyCluster = cl;
+          break;
+        }
+      }
+
+      if (nearbyCluster != null) {
+        nearbyCluster.count++;
+      } else {
+        if (accepted.length < maxLimit) {
+          accepted.add(_MutableCluster(representative: item, count: 0));
+        }
+      }
+    }
+
+    // 4. Determine Hero badges vs Micro-pips:
+    // Top 5 or those with clusters are Hero badges; remainder are clean micro-pips
+    final result = <ParcelRadarItem>[];
+    for (int i = 0; i < accepted.length; i++) {
+      final cl = accepted[i];
+      final isHero =
+          i < 6 || cl.count > 0 || cl.representative.probabilityPercent >= 90;
+      result.add(
+        cl.representative.copyWith(
+          nearbyCount: cl.count,
+          isHero: isHero,
+        ),
+      );
+    }
+
+    return result;
+  }
 
   static const Set<String> popularPrizedIds = {
     'borowik_szlachetny',
@@ -81,9 +173,24 @@ class ParcelRadarService {
     required WeatherRainfall? weather,
     required int selectedMonth,
     String? targetMushroomId,
+    double zoom = 15.0,
+    int minProbability = 50,
+    int maxLimit = 20,
     CancelToken? cancelToken,
   }) async {
     try {
+      final cacheKey =
+          '${minLat.toStringAsFixed(3)}_${minLng.toStringAsFixed(3)}_${maxLat.toStringAsFixed(3)}_${maxLng.toStringAsFixed(3)}_m${selectedMonth}_t${targetMushroomId ?? "all"}';
+
+      if (_lruCache.containsKey(cacheKey)) {
+        return clusterAndThinRadars(
+          items: _lruCache[cacheKey]!,
+          zoom: zoom,
+          minProbability: minProbability,
+          maxLimit: maxLimit,
+        );
+      }
+
       final minX = lonToX(minLng);
       final minY = latToY(minLat);
       final maxX = lonToX(maxLng);
@@ -262,14 +369,18 @@ class ParcelRadarService {
         }
       }
 
-      // Return top visible forest parcels with balanced viewport density (60-80 top spots)
-      // to keep map dragging silky smooth at 60-120 FPS without cluttering.
-      const maxViewportRadars = 75;
-      if (items.length > maxViewportRadars) {
-        items.sort((a, b) => b.probabilityPercent.compareTo(a.probabilityPercent));
-        return items.take(maxViewportRadars).toList(growable: false);
+      // Save to LRU memory cache
+      if (_lruCache.length > 25) {
+        _lruCache.remove(_lruCache.keys.first);
       }
-      return items;
+      _lruCache[cacheKey] = items;
+
+      return clusterAndThinRadars(
+        items: items,
+        zoom: zoom,
+        minProbability: minProbability,
+        maxLimit: maxLimit,
+      );
     } catch (e) {
       debugPrint('[ParcelRadarService] Error fetching radars: $e');
       return [];
