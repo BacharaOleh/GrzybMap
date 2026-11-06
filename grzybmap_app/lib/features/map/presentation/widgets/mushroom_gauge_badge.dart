@@ -14,6 +14,8 @@ class MushroomGaugeBadge extends StatelessWidget {
   final int ageYears;
   final bool showMushroomName;
   final bool showTreeSpecies;
+  final int nearbyCount;
+  final bool isHero;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
 
@@ -25,6 +27,8 @@ class MushroomGaugeBadge extends StatelessWidget {
     required this.ageYears,
     this.showMushroomName = false,
     this.showTreeSpecies = false,
+    this.nearbyCount = 0,
+    this.isHero = true,
     required this.onTap,
     this.onLongPress,
   });
@@ -40,6 +44,55 @@ class MushroomGaugeBadge extends StatelessWidget {
     final scoreColor = _getScoreColor();
     final fillRatio = (probability / 100.0).clamp(0.0, 1.0);
     final isTop = probability >= 65;
+
+    // Sleek, compact Micro-Pip for secondary points
+    if (!isHero) {
+      return GestureDetector(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 2.0),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceElevated.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isTop ? scoreColor.withValues(alpha: 0.7) : AppColors.border,
+              width: 1.0,
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black45,
+                blurRadius: 2.0,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: scoreColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 3),
+              Text(
+                '$probability%',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: scoreColor,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     final hasAdditionalText = showMushroomName || showTreeSpecies;
 
@@ -93,6 +146,26 @@ class MushroomGaugeBadge extends StatelessWidget {
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
+
+            // Nearby cluster indicator (+N extra spots in this sector)
+            if (nearbyCount > 0) ...[
+              const SizedBox(width: 3),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 3.5, vertical: 1.0),
+                decoration: BoxDecoration(
+                  color: scoreColor.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '+$nearbyCount',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: scoreColor,
+                  ),
+                ),
+              ),
+            ],
 
             // Optional: Mushroom Name
             if (showMushroomName) ...[

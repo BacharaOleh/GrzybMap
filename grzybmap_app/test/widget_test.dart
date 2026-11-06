@@ -38,6 +38,9 @@ class _FakeForestRepository implements ForestRepository {
 
 class _FakeParcelRadarService implements ParcelRadarService {
   @override
+  void clearCache() {}
+
+  @override
   Future<List<ParcelRadarItem>> fetchVisibleRadars({
     required double minLat,
     required double minLng,
@@ -46,6 +49,9 @@ class _FakeParcelRadarService implements ParcelRadarService {
     WeatherRainfall? weather,
     required int selectedMonth,
     String? targetMushroomId,
+    double zoom = 15.0,
+    int minProbability = 50,
+    int maxLimit = 20,
     CancelToken? cancelToken,
   }) async =>
       const [];
