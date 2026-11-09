@@ -1,0 +1,34 @@
+#!/bin/sh
+AUTHOR=$(git var GIT_AUTHOR_IDENT 2>/dev/null)
+COMMITTER=$(git var GIT_COMMITTER_IDENT 2>/dev/null)
+
+REQUIRED_NAME="BacharaOleh"
+REQUIRED_EMAIL="83633550+BacharaOleh@users.noreply.github.com"
+
+case "$AUTHOR" in
+  *"$REQUIRED_EMAIL"*) ;;
+  *)
+    echo "==========================================================" >&2
+    echo "ERROR: Commit rejected! Invalid author." >&2
+    echo "Author must be: $REQUIRED_NAME <$REQUIRED_EMAIL>" >&2
+    echo "Current author: $AUTHOR" >&2
+    echo "Fix by running: git config user.name '$REQUIRED_NAME' && git config user.email '$REQUIRED_EMAIL'" >&2
+    echo "==========================================================" >&2
+    exit 1
+    ;;
+esac
+
+case "$COMMITTER" in
+  *"$REQUIRED_EMAIL"*) ;;
+  *)
+    echo "==========================================================" >&2
+    echo "ERROR: Commit rejected! Invalid committer." >&2
+    echo "Committer must be: $REQUIRED_NAME <$REQUIRED_EMAIL>" >&2
+    echo "Current committer: $COMMITTER" >&2
+    echo "Fix by running: git config user.name '$REQUIRED_NAME' && git config user.email '$REQUIRED_EMAIL'" >&2
+    echo "==========================================================" >&2
+    exit 1
+    ;;
+esac
+
+exit 0

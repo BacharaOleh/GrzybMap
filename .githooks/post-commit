@@ -1,0 +1,14 @@
+#!/bin/sh
+REQUIRED_EMAIL="83633550+BacharaOleh@users.noreply.github.com"
+REQUIRED_NAME="BacharaOleh"
+
+AUTHOR_EMAIL=$(git log -1 --format="%ae" HEAD)
+if [ "$AUTHOR_EMAIL" != "$REQUIRED_EMAIL" ]; then
+    echo "==========================================================" >&2
+    echo "WARNING: Created commit with unexpected author '$AUTHOR_EMAIL'!" >&2
+    echo "Auto-fixing commit author to $REQUIRED_NAME <$REQUIRED_EMAIL>..." >&2
+    git commit --amend --author="$REQUIRED_NAME <$REQUIRED_EMAIL>" --no-edit
+    echo "Author corrected successfully." >&2
+    echo "==========================================================" >&2
+fi
+exit 0
