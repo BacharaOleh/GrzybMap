@@ -52,6 +52,7 @@ class _FakeParcelRadarService implements ParcelRadarService {
     double zoom = 15.0,
     int minProbability = 50,
     int maxLimit = 20,
+    double minPixelDistance = 75.0,
     CancelToken? cancelToken,
   }) async =>
       const [];

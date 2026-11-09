@@ -4,6 +4,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../controllers/map_screen_controller.dart';
 import '../../../mushroom_radar/data/mushroom_database.dart';
 import '../../../mushroom_radar/domain/models.dart';
+import '../../../mushroom_radar/domain/parcel_radar.dart';
 import 'mushroom_gauge_badge.dart';
 import 'mushroom_photo_widget.dart';
 import 'mushroom_search_sheet.dart';
@@ -135,6 +136,12 @@ class RadarSettingsSheet extends ConsumerWidget {
     );
     final showLiveClouds = ref.watch(
       mapScreenProvider.select((s) => s.showLiveRadarCloudLayer),
+    );
+    final densityMode = ref.watch(
+      mapScreenProvider.select((s) => s.radarDensityMode),
+    );
+    final minProbability = ref.watch(
+      mapScreenProvider.select((s) => s.radarMinProbability),
     );
 
     final optionValues = [
@@ -336,7 +343,16 @@ class RadarSettingsSheet extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
 
-                    // Section 2: Grouped Inset Settings Container (Apple/Linear-style)
+                    // Section 2: Density Mode & Probability Threshold (Spatial NMS Controls)
+                    _buildDensityAndThresholdSection(
+                      context,
+                      ref,
+                      densityMode,
+                      minProbability,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Section 3: Grouped Inset Settings Container (Apple/Linear-style)
                     _buildGroupedSettings(
                       context,
                       optionValues,
@@ -612,6 +628,250 @@ class RadarSettingsSheet extends ConsumerWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  /// Interactive section for spatial density clustering mode and minimum probability threshold.
+  Widget _buildDensityAndThresholdSection(
+    BuildContext context,
+    WidgetRef ref,
+    RadarDensityMode currentDensity,
+    int currentMinProb,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.08),
+          width: 0.8,
+        ),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section header
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.emeraldNeon.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(
+                    color: AppColors.emeraldNeon.withValues(alpha: 0.25),
+                    width: 0.8,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.tune_rounded,
+                  size: 17,
+                  color: AppColors.emeraldNeon,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Gęstość i czytelność radaru',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 1.5),
+                    Text(
+                      'Klastrowanie przestrzenne zapobiega nakładaniu się plakietek',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: AppColors.textDim,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+          const Divider(color: Colors.white10, height: 1),
+          const SizedBox(height: 10),
+
+          // Subsection: Density Mode
+          const Text(
+            'LICZBA ZNACZNIKÓW NA EKRANIE',
+            style: TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textDim,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          Row(
+            children: [
+              for (final mode in RadarDensityMode.values) ...[
+                Expanded(
+                  child: _buildDensityModeButton(
+                    label: mode.shortLabel,
+                    badge: mode == RadarDensityMode.minimal
+                        ? 'TOP 10'
+                        : (mode == RadarDensityMode.balanced ? 'TOP 20' : 'Wszystkie'),
+                    isSelected: currentDensity == mode,
+                    onTap: () {
+                      ref.read(mapScreenProvider.notifier).setRadarDensityMode(mode);
+                    },
+                  ),
+                ),
+                if (mode != RadarDensityMode.values.last) const SizedBox(width: 6),
+              ],
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          // Subsection: Probability Threshold
+          const Text(
+            'MINIMALNY PRÓG SZANSY',
+            style: TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textDim,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          Row(
+            children: [
+              for (final prob in const [50, 70, 85]) ...[
+                Expanded(
+                  child: _buildProbThresholdButton(
+                    percentage: prob,
+                    tag: prob == 50 ? 'Zalecany' : (prob == 70 ? 'Pewne' : 'Elitarne'),
+                    isSelected: currentMinProb == prob,
+                    onTap: () {
+                      ref.read(mapScreenProvider.notifier).setRadarMinProbability(prob);
+                    },
+                  ),
+                ),
+                if (prob != 85) const SizedBox(width: 6),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDensityModeButton({
+    required String label,
+    required String badge,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.emeraldNeon.withValues(alpha: 0.14)
+              : Colors.white.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.emeraldNeon.withValues(alpha: 0.55)
+                : Colors.white.withValues(alpha: 0.08),
+            width: isSelected ? 1.2 : 0.8,
+          ),
+        ),
+        child: Column(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: isSelected ? AppColors.emeraldNeon : Colors.white,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              badge,
+              style: TextStyle(
+                fontSize: 9.5,
+                color: isSelected ? AppColors.emeraldNeon.withValues(alpha: 0.8) : AppColors.textDim,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProbThresholdButton({
+    required int percentage,
+    required String tag,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final activeColor = percentage >= 85
+        ? AppColors.goldAmber
+        : (percentage >= 70 ? AppColors.emeraldNeon : const Color(0xFF38BDF8));
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? activeColor.withValues(alpha: 0.14)
+              : Colors.white.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected
+                ? activeColor.withValues(alpha: 0.6)
+                : Colors.white.withValues(alpha: 0.08),
+            width: isSelected ? 1.2 : 0.8,
+          ),
+        ),
+        child: Column(
+          children: [
+            Text(
+              '≥ $percentage%',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: isSelected ? activeColor : Colors.white,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              tag,
+              style: TextStyle(
+                fontSize: 9.5,
+                color: isSelected ? activeColor.withValues(alpha: 0.8) : AppColors.textDim,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );

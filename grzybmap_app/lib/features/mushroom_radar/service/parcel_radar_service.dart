@@ -176,6 +176,7 @@ class ParcelRadarService {
     double zoom = 15.0,
     int minProbability = 50,
     int maxLimit = 20,
+    double minPixelDistance = 75.0,
     CancelToken? cancelToken,
   }) async {
     try {
@@ -188,6 +189,7 @@ class ParcelRadarService {
           zoom: zoom,
           minProbability: minProbability,
           maxLimit: maxLimit,
+          minPixelDistance: minPixelDistance,
         );
       }
 
@@ -380,6 +382,7 @@ class ParcelRadarService {
         zoom: zoom,
         minProbability: minProbability,
         maxLimit: maxLimit,
+        minPixelDistance: minPixelDistance,
       );
     } catch (e) {
       debugPrint('[ParcelRadarService] Error fetching radars: $e');

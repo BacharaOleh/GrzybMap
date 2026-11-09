@@ -46,6 +46,8 @@ class MapScreenState {
   final bool showRadarMushroomName;
   final bool showRadarTreeSpecies;
   final bool showLowProbabilityRadars;
+  final RadarDensityMode radarDensityMode;
+  final int radarMinProbability;
   final String? targetMushroomId;
   final bool showRainRadarLayer;
   final String? rainRadarUrlTemplate;
@@ -81,6 +83,8 @@ class MapScreenState {
     this.showRadarMushroomName = false,
     this.showRadarTreeSpecies = false,
     this.showLowProbabilityRadars = false,
+    this.radarDensityMode = RadarDensityMode.balanced,
+    this.radarMinProbability = 50,
     this.targetMushroomId,
     this.showRainRadarLayer = false,
     this.rainRadarUrlTemplate,
@@ -94,12 +98,12 @@ class MapScreenState {
     this.offlineDownloadStatus = '',
   });
 
-  /// Visible parcel radars filtered by active settings (>= 50% by default, or all if low prob enabled)
+  /// Visible parcel radars filtered by active settings (>= radarMinProbability by default, or all if low prob enabled)
   List<ParcelRadarItem> get visibleParcelRadars {
     if (!showParcelRadars) return const [];
     if (showLowProbabilityRadars) return parcelRadars;
     return parcelRadars
-        .where((r) => r.probabilityPercent >= 50)
+        .where((r) => r.probabilityPercent >= radarMinProbability)
         .toList(growable: false);
   }
 
@@ -163,6 +167,8 @@ class MapScreenState {
     bool? showRadarMushroomName,
     bool? showRadarTreeSpecies,
     bool? showLowProbabilityRadars,
+    RadarDensityMode? radarDensityMode,
+    int? radarMinProbability,
     String? targetMushroomId,
     bool clearTargetMushroom = false,
     bool? showRainRadarLayer,
@@ -212,6 +218,8 @@ class MapScreenState {
           showRadarTreeSpecies ?? this.showRadarTreeSpecies,
       showLowProbabilityRadars:
           showLowProbabilityRadars ?? this.showLowProbabilityRadars,
+      radarDensityMode: radarDensityMode ?? this.radarDensityMode,
+      radarMinProbability: radarMinProbability ?? this.radarMinProbability,
       targetMushroomId: clearTargetMushroom
           ? null
           : (targetMushroomId ?? this.targetMushroomId),
@@ -263,6 +271,16 @@ class MapScreenNotifier extends StateNotifier<MapScreenState> {
   CancelToken? _activeCancelToken;
   int _activeRadarRequestId = 0;
   CancelToken? _activeRadarCancelToken;
+  LatLngBounds? _lastRadarBounds;
+  double? _lastRadarZoom;
+
+  static RadarDensityMode _parseDensityMode(String? raw) {
+    if (raw == null) return RadarDensityMode.balanced;
+    for (final mode in RadarDensityMode.values) {
+      if (mode.name == raw) return mode;
+    }
+    return RadarDensityMode.balanced;
+  }
 
   MapScreenNotifier({
     required ForestRepository forestRepository,
@@ -295,6 +313,8 @@ class MapScreenNotifier extends StateNotifier<MapScreenState> {
           showRadarMushroomName: preferencesService?.getShowNames() ?? false,
           showRadarTreeSpecies: preferencesService?.getShowForest() ?? false,
           showLowProbabilityRadars: preferencesService?.getShowLowProb() ?? false,
+          radarDensityMode: _parseDensityMode(preferencesService?.getRadarDensity()),
+          radarMinProbability: preferencesService?.getRadarMinProbability() ?? 50,
           isOfflineMode: offlineForestService?.isForcedOffline() ?? false,
           downloadedAreas: offlineForestService?.getAreaSummaries() ?? const [],
         ));
@@ -588,12 +608,20 @@ class MapScreenNotifier extends StateNotifier<MapScreenState> {
   }
 
   Future<void> updateVisibleRadars(LatLngBounds bounds, double zoom) async {
+    _lastRadarBounds = bounds;
+    _lastRadarZoom = zoom;
+
     if (!state.showParcelRadars || zoom < 13.5) {
       if (state.parcelRadars.isNotEmpty) {
         state = state.copyWith(parcelRadars: const []);
       }
       return;
     }
+
+    final density = state.radarDensityMode;
+    final limit = density.getMaxLimit(zoom);
+    final minDistance = density.minPixelDistance;
+    final minProb = state.showLowProbabilityRadars ? 30 : state.radarMinProbability;
 
     if (state.isOfflineMode) {
       final summaries = _offlineForestService?.getAreaSummaries() ?? [];
@@ -629,8 +657,6 @@ class MapScreenNotifier extends StateNotifier<MapScreenState> {
           }
         }
       }
-      final limit = zoom < 14.5 ? 10 : (zoom < 16.0 ? 18 : 25);
-      final minProb = state.showLowProbabilityRadars ? 30 : 60;
 
       state = state.copyWith(
         parcelRadars: ParcelRadarService.clusterAndThinRadars(
@@ -638,6 +664,7 @@ class MapScreenNotifier extends StateNotifier<MapScreenState> {
           zoom: zoom,
           minProbability: minProb,
           maxLimit: limit,
+          minPixelDistance: minDistance,
         ),
       );
       return;
@@ -661,9 +688,6 @@ class MapScreenNotifier extends StateNotifier<MapScreenState> {
         } catch (_) {}
       }
 
-      final limit = zoom < 14.5 ? 10 : (zoom < 16.0 ? 18 : 25);
-      final minProb = state.showLowProbabilityRadars ? 30 : 60;
-
       final items = await _parcelRadarService.fetchVisibleRadars(
         minLat: bounds.south,
         minLng: bounds.west,
@@ -675,6 +699,7 @@ class MapScreenNotifier extends StateNotifier<MapScreenState> {
         zoom: zoom,
         minProbability: minProb,
         maxLimit: limit,
+        minPixelDistance: minDistance,
         cancelToken: _activeRadarCancelToken,
       );
 
@@ -683,6 +708,24 @@ class MapScreenNotifier extends StateNotifier<MapScreenState> {
       }
     } catch (_) {
       // Ignored network/cancellation
+    }
+  }
+
+  void setRadarDensityMode(RadarDensityMode mode) {
+    if (state.radarDensityMode == mode) return;
+    state = state.copyWith(radarDensityMode: mode);
+    _preferencesService?.saveRadarSettings(densityMode: mode.name);
+    if (_lastRadarBounds != null && _lastRadarZoom != null) {
+      updateVisibleRadars(_lastRadarBounds!, _lastRadarZoom!);
+    }
+  }
+
+  void setRadarMinProbability(int minProb) {
+    if (state.radarMinProbability == minProb) return;
+    state = state.copyWith(radarMinProbability: minProb);
+    _preferencesService?.saveRadarSettings(minProbability: minProb);
+    if (_lastRadarBounds != null && _lastRadarZoom != null) {
+      updateVisibleRadars(_lastRadarBounds!, _lastRadarZoom!);
     }
   }
 

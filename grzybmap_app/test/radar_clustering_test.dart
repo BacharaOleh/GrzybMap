@@ -101,6 +101,52 @@ void main() {
       // Ensure sorted by prominence (highest probability first)
       expect(result.first.probabilityPercent, 79);
     });
+
+    test('RadarDensityMode helpers provide consistent limits and distances across zoom levels', () {
+      expect(RadarDensityMode.minimal.getMaxLimit(14.0), 6);
+      expect(RadarDensityMode.minimal.getMaxLimit(15.0), 10);
+      expect(RadarDensityMode.minimal.getMaxLimit(16.5), 14);
+
+      expect(RadarDensityMode.balanced.getMaxLimit(14.0), 10);
+      expect(RadarDensityMode.balanced.getMaxLimit(15.0), 18);
+      expect(RadarDensityMode.balanced.getMaxLimit(16.5), 25);
+
+      expect(RadarDensityMode.all.getMaxLimit(15.0), 75);
+
+      expect(RadarDensityMode.minimal.minPixelDistance, greaterThan(RadarDensityMode.balanced.minPixelDistance));
+      expect(RadarDensityMode.balanced.minPixelDistance, greaterThan(RadarDensityMode.all.minPixelDistance));
+    });
+
+    test('RadarDensityMode.minimal produces fewer clusters than balanced on dense data', () {
+      final denseParcels = List.generate(20, (i) {
+        return ParcelRadarItem(
+          id: 'p_$i',
+          centroid: LatLng(52.200 + (i * 0.001), 20.800 + (i * 0.001)),
+          speciesName: 'Sosna',
+          speciesShort: 'So',
+          ageYears: 65,
+          areaHa: 4.0,
+          probabilityPercent: 70 + (i % 25),
+          topMushroomName: 'Borowik',
+        );
+      });
+
+      final minimalResult = ParcelRadarService.clusterAndThinRadars(
+        items: denseParcels,
+        zoom: 15.0,
+        maxLimit: RadarDensityMode.minimal.getMaxLimit(15.0),
+        minPixelDistance: RadarDensityMode.minimal.minPixelDistance,
+      );
+
+      final balancedResult = ParcelRadarService.clusterAndThinRadars(
+        items: denseParcels,
+        zoom: 15.0,
+        maxLimit: RadarDensityMode.balanced.getMaxLimit(15.0),
+        minPixelDistance: RadarDensityMode.balanced.minPixelDistance,
+      );
+
+      expect(minimalResult.length, lessThanOrEqualTo(balancedResult.length));
+    });
   });
 }
 

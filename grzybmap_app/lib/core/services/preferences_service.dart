@@ -77,20 +77,29 @@ class PreferencesService {
   static const _keyShowLowProb = 'radar_show_low_prob';
   static const _keyTargetMushroom = 'radar_target_mushroom';
 
+  static const _keyRadarDensity = 'radar_density_mode';
+  static const _keyRadarMinProb = 'radar_min_probability';
+
   Future<void> saveRadarSettings({
     bool? showNames,
     bool? showForest,
     bool? showLowProb,
+    String? densityMode,
+    int? minProbability,
   }) async {
     await init();
     if (showNames != null) await _prefs?.setBool(_keyShowNames, showNames);
     if (showForest != null) await _prefs?.setBool(_keyShowForest, showForest);
     if (showLowProb != null) await _prefs?.setBool(_keyShowLowProb, showLowProb);
+    if (densityMode != null) await _prefs?.setString(_keyRadarDensity, densityMode);
+    if (minProbability != null) await _prefs?.setInt(_keyRadarMinProb, minProbability);
   }
 
   bool getShowNames() => _prefs?.getBool(_keyShowNames) ?? false;
   bool getShowForest() => _prefs?.getBool(_keyShowForest) ?? false;
   bool getShowLowProb() => _prefs?.getBool(_keyShowLowProb) ?? true;
+  String? getRadarDensity() => _prefs?.getString(_keyRadarDensity);
+  int? getRadarMinProbability() => _prefs?.getInt(_keyRadarMinProb);
 
   Future<void> saveTargetMushroom(String? mushroomId) async {
     await init();

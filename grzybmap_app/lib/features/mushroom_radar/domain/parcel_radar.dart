@@ -1,5 +1,74 @@
 import 'package:latlong2/latlong.dart';
 
+/// Density and clustering mode for mushroom radar badges on the map.
+enum RadarDensityMode {
+  /// Minimal mode: shows only top 6–12 highest-scoring forest parcels with wide spacing.
+  minimal,
+
+  /// Balanced mode (recommended default): shows top 10–22 points with comfortable spacing.
+  balanced,
+
+  /// All parcels mode: disables aggressive spatial thinning, showing all parcels in viewport.
+  all,
+}
+
+extension RadarDensityModeX on RadarDensityMode {
+  String get labelPl {
+    switch (this) {
+      case RadarDensityMode.minimal:
+        return 'Czysta (TOP 10)';
+      case RadarDensityMode.balanced:
+        return 'Zbalansowana (TOP 20)';
+      case RadarDensityMode.all:
+        return 'Wszystkie';
+    }
+  }
+
+  String get shortLabel {
+    switch (this) {
+      case RadarDensityMode.minimal:
+        return 'Czysta';
+      case RadarDensityMode.balanced:
+        return 'Zbalansowana';
+      case RadarDensityMode.all:
+        return 'Wszystkie';
+    }
+  }
+
+  String get descriptionPl {
+    switch (this) {
+      case RadarDensityMode.minimal:
+        return 'Maksymalnie 10 kluczowych sektorów z dużym odstępem';
+      case RadarDensityMode.balanced:
+        return 'Optymalne klastrowanie przestrzenne (zalecane)';
+      case RadarDensityMode.all:
+        return 'Wszystkie wykryte wydzielenia bez usuwania nakładania';
+    }
+  }
+
+  int getMaxLimit(double zoom) {
+    switch (this) {
+      case RadarDensityMode.minimal:
+        return zoom < 14.5 ? 6 : (zoom < 16.0 ? 10 : 14);
+      case RadarDensityMode.balanced:
+        return zoom < 14.5 ? 10 : (zoom < 16.0 ? 18 : 25);
+      case RadarDensityMode.all:
+        return 75;
+    }
+  }
+
+  double get minPixelDistance {
+    switch (this) {
+      case RadarDensityMode.minimal:
+        return 95.0;
+      case RadarDensityMode.balanced:
+        return 75.0;
+      case RadarDensityMode.all:
+        return 35.0;
+    }
+  }
+}
+
 class ParcelRadarItem {
   final String id;
   final LatLng centroid;

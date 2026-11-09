@@ -358,95 +358,94 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 maxZoom: 19,
               ),
 
-              // 14-Day Cumulative Rainfall Heatmap Halos (Open-Meteo multi-region)
+              // 14-Day Cumulative Rainfall Layer (Halos + Exact Readings consolidated into single layer)
               if (showRainRadar && regionalRainfall.isNotEmpty)
                 MarkerLayer(
-                  markers: regionalRainfall.map((RegionalRainfallPoint pt) {
-                    return Marker(
-                      point: LatLng(pt.latitude, pt.longitude),
-                      width: 190,
-                      height: 190,
-                      alignment: Alignment.center,
-                      child: IgnorePointer(
-                        child: Container(
-                          width: 190,
-                          height: 190,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                pt.heatColor.withValues(alpha: 0.36),
-                                pt.heatColor.withValues(alpha: 0.16),
-                                pt.heatColor.withValues(alpha: 0.0),
+                  markers: [
+                    // Ambient Heatmap Halos
+                    ...regionalRainfall.map((RegionalRainfallPoint pt) {
+                      return Marker(
+                        point: LatLng(pt.latitude, pt.longitude),
+                        width: 190,
+                        height: 190,
+                        alignment: Alignment.center,
+                        child: IgnorePointer(
+                          child: Container(
+                            width: 190,
+                            height: 190,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  pt.heatColor.withValues(alpha: 0.36),
+                                  pt.heatColor.withValues(alpha: 0.16),
+                                  pt.heatColor.withValues(alpha: 0.0),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                    // Interactive Reading Badges
+                    ...regionalRainfall.map((RegionalRainfallPoint pt) {
+                      return Marker(
+                        point: LatLng(pt.latitude, pt.longitude),
+                        width: 84,
+                        height: 28,
+                        alignment: Alignment.center,
+                        child: GestureDetector(
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '🌧️ ${pt.regionName ?? 'Rejon'}: ${pt.formattedMm} deszczu za 14 dni\n${pt.categoryLabel}',
+                                ),
+                                backgroundColor: AppColors.card,
+                                duration: const Duration(seconds: 4),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceElevated.withValues(alpha: 0.90),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: pt.heatColor.withValues(alpha: 0.8),
+                                width: 1.2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: pt.heatColor.withValues(alpha: 0.3),
+                                  blurRadius: 6,
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  pt.rainfall14DaysMm >= 22.0 ? '💧' : '☁️',
+                                  style: const TextStyle(fontSize: 10),
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  pt.formattedMm,
+                                  style: TextStyle(
+                                    color: pt.heatColor,
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  }).toList(growable: false),
-                ),
-
-              // 14-Day Regional Rainfall Badges with exact mm readings
-              if (showRainRadar && regionalRainfall.isNotEmpty)
-                MarkerLayer(
-                  markers: regionalRainfall.map((RegionalRainfallPoint pt) {
-                    return Marker(
-                      point: LatLng(pt.latitude, pt.longitude),
-                      width: 84,
-                      height: 28,
-                      alignment: Alignment.center,
-                      child: GestureDetector(
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                '🌧️ ${pt.regionName ?? 'Rejon'}: ${pt.formattedMm} deszczu za 14 dni\n${pt.categoryLabel}',
-                              ),
-                              backgroundColor: AppColors.card,
-                              duration: const Duration(seconds: 4),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceElevated.withValues(alpha: 0.90),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: pt.heatColor.withValues(alpha: 0.8),
-                              width: 1.2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: pt.heatColor.withValues(alpha: 0.3),
-                                blurRadius: 6,
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                pt.rainfall14DaysMm >= 22.0 ? '💧' : '☁️',
-                                style: const TextStyle(fontSize: 10),
-                              ),
-                              const SizedBox(width: 3),
-                              Text(
-                                pt.formattedMm,
-                                style: TextStyle(
-                                  color: pt.heatColor,
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(growable: false),
+                      );
+                    }),
+                  ],
                 ),
 
               // Real-Time Radar Clouds Layer (RainViewer Live)
@@ -528,127 +527,67 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   }).toList(growable: false),
                 ),
 
-              // User location marker with high-visibility halo
-              if (userLocation != null)
+              // Consolidated Tactical Navigation & User Landmarks Layer (GPS, Destination Pin, Car Anchor, My Spots)
+              if (userLocation != null ||
+                  clickedPoint != null ||
+                  carLocation != null ||
+                  (isJournalVisible && journalSpots.isNotEmpty))
                 MarkerLayer(
                   markers: [
-                    Marker(
-                      point: userLocation,
-                      width: 36,
-                      height: 36,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: AppColors.skyBlue.withValues(alpha: 0.25),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          Container(
-                            width: 18,
-                            height: 18,
-                            decoration: BoxDecoration(
-                              color: AppColors.skyBlue,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2.5),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: AppColors.skyBlue,
-                                  blurRadius: 10,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                    // 1. Secret Foraging Spots (if visible)
+                    if (isJournalVisible && journalSpots.isNotEmpty)
+                      ...journalSpots.map((spot) {
+                        final isKurki = spot.mushroomName.toLowerCase().contains('kurk') ||
+                            spot.mushroomName.toLowerCase().contains('pieprznik');
+                        final pillColor = isKurki
+                            ? const Color(0xFFEAB308)
+                            : const Color(0xFFA855F7);
+                        final bgColor = isKurki
+                            ? const Color(0xFF261D0A).withValues(alpha: 0.94)
+                            : const Color(0xFF1E0C2D).withValues(alpha: 0.94);
 
-              // Pin Marker for clicked point
-              if (clickedPoint != null)
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: clickedPoint,
-                      width: 24,
-                      height: 24,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.emeraldNeon,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: AppColors.emeraldNeon,
-                              blurRadius: 10,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-              // Car location marker with amber pill tag & halo matching mockup
-              if (carLocation != null)
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: carLocation,
-                      width: 160,
-                      height: 58,
-                      alignment: Alignment.center,
-                      child: GestureDetector(
-                        onTap: () {
-                          ref.read(mapScreenProvider.notifier).toggleCarRoute();
-                          final isActive = ref.read(mapScreenProvider).showCarRoute;
-                          if (isActive && ref.read(mapScreenProvider).userLocation == null) {
-                            ref.read(mapScreenProvider.notifier).locateUser();
-                          }
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                isActive
-                                    ? '🧭 Nawigacja: linia do auta włączona'
-                                    : 'Ukryto linię nawigacji',
-                              ),
-                              backgroundColor: AppColors.card,
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        },
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Floating Amber Pill Tag: "🚗 Auto (520m NW)"
-                            Consumer(
-                              builder: (context, ref, _) {
-                                final nav = ref.watch(
-                                  mapScreenProvider.select((s) => s.carNavigation),
-                                );
-                                final label = nav != null
-                                    ? 'Auto (${nav.humanDistance} ${nav.cardinalDirection})'
-                                    : 'Auto';
-                                return Container(
+                        return Marker(
+                          point: LatLng(spot.latitude, spot.longitude),
+                          width: 140,
+                          height: 52,
+                          alignment: Alignment.center,
+                          child: GestureDetector(
+                            onTap: () {
+                              SpotDetailsSheet.show(
+                                context: context,
+                                spot: spot,
+                                onDelete: () {
+                                  ref
+                                      .read(foragingJournalProvider.notifier)
+                                      .deleteSpot(spot.id);
+                                },
+                                onNavigate: () {
+                                  _mapController.move(
+                                    LatLng(spot.latitude, spot.longitude),
+                                    16.0,
+                                  );
+                                },
+                              );
+                            },
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Pill Tag: "[🍄 6x Borowik]" or "[🍄 Kurki]"
+                                Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 8,
-                                    vertical: 3,
+                                    vertical: 3.5,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF1E1A11).withValues(alpha: 0.94),
-                                    borderRadius: BorderRadius.circular(10),
+                                    color: bgColor,
+                                    borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: AppColors.amberWarn,
+                                      color: pillColor,
                                       width: 1.2,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.amberWarn.withValues(alpha: 0.35),
+                                        color: pillColor.withValues(alpha: 0.4),
                                         blurRadius: 8,
                                         offset: const Offset(0, 2),
                                       ),
@@ -657,154 +596,209 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(
-                                        Icons.directions_car_rounded,
-                                        size: 13,
-                                        color: AppColors.amberWarn,
+                                      MushroomVectorIcon(
+                                        size: 14,
+                                        capColor: pillColor,
                                       ),
                                       const SizedBox(width: 4),
-                                      Text(
-                                        label,
-                                        style: const TextStyle(
-                                          color: AppColors.amberWarn,
-                                          fontSize: 10.5,
-                                          fontWeight: FontWeight.w800,
-                                          fontFeatures: [FontFeature.tabularFigures()],
+                                      Flexible(
+                                        child: Text(
+                                          spot.quantityAmount > 0
+                                              ? '${spot.humanQuantity} ${spot.mushroomName}'
+                                              : spot.mushroomName,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                     ],
                                   ),
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 2),
-                            // Car Glyphs Halo on the road
-                            Container(
-                              width: 26,
-                              height: 26,
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: AppColors.amberWarn,
-                                  width: 1.8,
                                 ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.amberWarn.withValues(alpha: 0.5),
-                                    blurRadius: 6,
-                                  ),
-                                ],
-                              ),
-                              alignment: Alignment.center,
-                              child: const Icon(
-                                Icons.directions_car_filled_rounded,
-                                size: 15,
-                                color: AppColors.amberWarn,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-              // Secret Foraging Spots Marker Layer (Purple Pill Tags matching mockup)
-              if (isJournalVisible && journalSpots.isNotEmpty)
-                MarkerLayer(
-                  markers: journalSpots.map((spot) {
-                    final isKurki = spot.mushroomName.toLowerCase().contains('kurk') ||
-                        spot.mushroomName.toLowerCase().contains('pieprznik');
-                    final pillColor = isKurki
-                        ? const Color(0xFFEAB308)
-                        : const Color(0xFFA855F7);
-                    final bgColor = isKurki
-                        ? const Color(0xFF261D0A).withValues(alpha: 0.94)
-                        : const Color(0xFF1E0C2D).withValues(alpha: 0.94);
-
-                    return Marker(
-                      point: LatLng(spot.latitude, spot.longitude),
-                      width: 140,
-                      height: 52,
-                      alignment: Alignment.center,
-                      child: GestureDetector(
-                        onTap: () {
-                          SpotDetailsSheet.show(
-                            context: context,
-                            spot: spot,
-                            onDelete: () {
-                              ref
-                                  .read(foragingJournalProvider.notifier)
-                                  .deleteSpot(spot.id);
-                            },
-                            onNavigate: () {
-                              _mapController.move(
-                                LatLng(spot.latitude, spot.longitude),
-                                16.0,
-                              );
-                            },
-                          );
-                        },
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Pill Tag: "[🍄 6x Borowik]" or "[🍄 Kurki]"
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3.5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: bgColor,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: pillColor,
-                                  width: 1.2,
+                                // Downward pointer
+                                CustomPaint(
+                                  size: const Size(8, 5),
+                                  painter: _DownPointerPainter(color: pillColor),
                                 ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: pillColor.withValues(alpha: 0.4),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+
+                    // 2. Car location marker with amber pill tag & halo matching mockup
+                    if (carLocation != null)
+                      Marker(
+                        point: carLocation,
+                        width: 160,
+                        height: 58,
+                        alignment: Alignment.center,
+                        child: GestureDetector(
+                          onTap: () {
+                            ref.read(mapScreenProvider.notifier).toggleCarRoute();
+                            final isActive = ref.read(mapScreenProvider).showCarRoute;
+                            if (isActive && ref.read(mapScreenProvider).userLocation == null) {
+                              ref.read(mapScreenProvider.notifier).locateUser();
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  isActive
+                                      ? '🧭 Nawigacja: linia do auta włączona'
+                                      : 'Ukryto linię nawigacji',
+                                ),
+                                backgroundColor: AppColors.card,
+                                duration: const Duration(seconds: 2),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  MushroomVectorIcon(
-                                    size: 14,
-                                    capColor: pillColor,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Flexible(
-                                    child: Text(
-                                      spot.quantityAmount > 0
-                                          ? '${spot.humanQuantity} ${spot.mushroomName}'
-                                          : spot.mushroomName,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                            );
+                          },
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Floating Amber Pill Tag: "🚗 Auto (520m NW)"
+                              Consumer(
+                                builder: (context, ref, _) {
+                                  final nav = ref.watch(
+                                    mapScreenProvider.select((s) => s.carNavigation),
+                                  );
+                                  final label = nav != null
+                                      ? 'Auto (${nav.humanDistance} ${nav.cardinalDirection})'
+                                      : 'Auto';
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
                                     ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF1E1A11).withValues(alpha: 0.94),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: AppColors.amberWarn,
+                                        width: 1.2,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.amberWarn.withValues(alpha: 0.35),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.directions_car_rounded,
+                                          size: 13,
+                                          color: AppColors.amberWarn,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          label,
+                                          style: const TextStyle(
+                                            color: AppColors.amberWarn,
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.w800,
+                                            fontFeatures: [FontFeature.tabularFigures()],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 2),
+                              // Car Glyphs Halo on the road
+                              Container(
+                                width: 26,
+                                height: 26,
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppColors.amberWarn,
+                                    width: 1.8,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.amberWarn.withValues(alpha: 0.5),
+                                      blurRadius: 6,
+                                    ),
+                                  ],
+                                ),
+                                alignment: Alignment.center,
+                                child: const Icon(
+                                  Icons.directions_car_filled_rounded,
+                                  size: 15,
+                                  color: AppColors.amberWarn,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                    // 3. User location marker with high-visibility halo
+                    if (userLocation != null)
+                      Marker(
+                        point: userLocation,
+                        width: 36,
+                        height: 36,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: AppColors.skyBlue.withValues(alpha: 0.25),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            Container(
+                              width: 18,
+                              height: 18,
+                              decoration: BoxDecoration(
+                                color: AppColors.skyBlue,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2.5),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: AppColors.skyBlue,
+                                    blurRadius: 10,
+                                    spreadRadius: 2,
                                   ),
                                 ],
                               ),
                             ),
-                            // Downward pointer
-                            CustomPaint(
-                              size: const Size(8, 5),
-                              painter: _DownPointerPainter(color: pillColor),
-                            ),
                           ],
                         ),
                       ),
-                    );
-                  }).toList(growable: false),
+
+                    // 4. Pin Marker for clicked point
+                    if (clickedPoint != null)
+                      Marker(
+                        point: clickedPoint,
+                        width: 24,
+                        height: 24,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.emeraldNeon,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: AppColors.emeraldNeon,
+                                blurRadius: 10,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
             ],
           ),
