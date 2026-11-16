@@ -50,9 +50,7 @@ class MapTopBar extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: const Color(0xFF0F291E).withValues(alpha: 0.95),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                            color:
-                                AppColors.emeraldLight.withValues(alpha: 0.4)),
+                        border: Border.all(color: AppColors.borderLight),
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.emeraldDeep.withValues(alpha: 0.3),
@@ -81,13 +79,24 @@ class MapTopBar extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const Text(
-                            'Zarządzaj ➔',
-                            style: TextStyle(
-                              color: AppColors.emeraldLight,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w800,
-                            ),
+                          const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Zarządzaj',
+                                style: TextStyle(
+                                  color: AppColors.emeraldLight,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              SizedBox(width: 2),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                size: 14,
+                                color: AppColors.textDim,
+                              ),
+                            ],
                           ),
                         ],
                       ),

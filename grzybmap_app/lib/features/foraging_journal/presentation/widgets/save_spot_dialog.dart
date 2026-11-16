@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../map/presentation/widgets/mushroom_photo_widget.dart';
 import '../../../mushroom_radar/data/mushroom_database.dart';
 import '../../domain/models/foraging_spot.dart';
 import '../controllers/foraging_journal_controller.dart';
@@ -90,7 +93,24 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
     });
   }
 
+  Future<void> _openSpeciesPicker(BuildContext context) async {
+    unawaited(HapticFeedback.selectionClick());
+    final pickedId = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _SpeciesPickerSheet(
+        selectedMushroomId: _selectedMushroomId,
+      ),
+    );
+
+    if (pickedId != null && pickedId != _selectedMushroomId) {
+      _onMushroomChanged(pickedId);
+    }
+  }
+
   void _submit() {
+    unawaited(HapticFeedback.mediumImpact());
     final title = _titleController.text.trim().isEmpty
         ? 'Moja miejscówka'
         : _titleController.text.trim();
@@ -122,6 +142,10 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final currentMushroom = MushroomDatabase.allMushrooms.firstWhere(
+      (m) => m.id == _selectedMushroomId,
+      orElse: () => MushroomDatabase.allMushrooms.first,
+    );
 
     return Container(
       padding: EdgeInsets.only(
@@ -133,7 +157,7 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
       decoration: BoxDecoration(
         color: AppColors.surfaceElevated,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.borderLight),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.5),
@@ -154,7 +178,7 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: AppColors.border,
+                  color: AppColors.borderLight,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -164,8 +188,8 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
             Row(
               children: [
                 Container(
-                  width: 38,
-                  height: 38,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     color: AppColors.emeraldDeep.withValues(alpha: 0.25),
                     borderRadius: BorderRadius.circular(10),
@@ -174,7 +198,11 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
                     ),
                   ),
                   alignment: Alignment.center,
-                  child: const Text('📍', style: TextStyle(fontSize: 20)),
+                  child: const Icon(
+                    Icons.bookmark_add_rounded,
+                    size: 22,
+                    color: AppColors.emeraldNeon,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 const Expanded(
@@ -211,13 +239,8 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
 
             // Spot Title Field
             const Text(
-              'NAZWA MIEJSCA',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textDim,
-                letterSpacing: 0.8,
-              ),
+              'Nazwa miejsca',
+              style: AppTypography.labelSmall,
             ),
             const SizedBox(height: 6),
             TextField(
@@ -228,73 +251,106 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
                 fillColor: AppColors.card,
                 hintText: 'np. Moja polana pod dębami',
                 hintStyle: const TextStyle(color: AppColors.textDim, fontSize: 13),
+                prefixIcon: const Icon(
+                  Icons.drive_file_rename_outline_rounded,
+                  size: 18,
+                  color: AppColors.textDim,
+                ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
+                  borderSide: const BorderSide(color: AppColors.borderLight),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
+                  borderSide: const BorderSide(color: AppColors.borderLight),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.emeraldNeon),
+                  borderSide: const BorderSide(color: AppColors.emeraldNeon, width: 1.2),
                 ),
               ),
             ),
 
             const SizedBox(height: 14),
 
-            // Mushroom species picker
+            // Mushroom species picker (Interactive Selector Card)
             const Text(
-              'ZNALEZIONY GATUNEK GRZYBA',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textDim,
-                letterSpacing: 0.8,
-              ),
+              'Gatunek grzyba',
+              style: AppTypography.labelSmall,
             ),
             const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: AppColors.card,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _selectedMushroomId,
-                  isExpanded: true,
-                  dropdownColor: AppColors.surfaceElevated,
-                  icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textDim),
-                  items: MushroomDatabase.allMushrooms.map((m) {
-                    return DropdownMenuItem<String>(
-                      value: m.id,
-                      child: Row(
+            InkWell(
+              onTap: () => _openSpeciesPicker(context),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.borderLight),
+                ),
+                child: Row(
+                  children: [
+                    MushroomPhotoWidget(
+                      assetPath: currentMushroom.photoAsset,
+                      size: 40,
+                      borderRadius: 8,
+                      borderColor: AppColors.emeraldNeon.withValues(alpha: 0.3),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('🍄', style: TextStyle(fontSize: 16)),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              m.namePl,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                          Text(
+                            currentMushroom.namePl,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            currentMushroom.latin,
+                            style: TextStyle(
+                              color: AppColors.emeraldLight.withValues(alpha: 0.8),
+                              fontSize: 11,
+                              fontStyle: FontStyle.italic,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    if (val != null) _onMushroomChanged(val);
-                  },
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.borderLight),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Zmień',
+                            style: TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(width: 4),
+                          Icon(Icons.unfold_more_rounded, size: 14, color: AppColors.textDim),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -310,13 +366,8 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'ILOŚĆ / ZBIÓR',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textDim,
-                          letterSpacing: 0.8,
-                        ),
+                        'Wielkość zbioru',
+                        style: AppTypography.labelSmall,
                       ),
                       const SizedBox(height: 6),
                       Container(
@@ -324,7 +375,7 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
                         decoration: BoxDecoration(
                           color: AppColors.card,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(color: AppColors.borderLight),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -332,6 +383,7 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
                             IconButton(
                               onPressed: () {
                                 if (_quantity > (_unit == 'kg' ? 0.5 : 1)) {
+                                  HapticFeedback.selectionClick();
                                   setState(() {
                                     _quantity -= (_unit == 'kg' ? 0.5 : 1);
                                   });
@@ -347,10 +399,12 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
                                 color: Colors.white,
+                                fontFeatures: [FontFeature.tabularFigures()],
                               ),
                             ),
                             IconButton(
                               onPressed: () {
+                                HapticFeedback.selectionClick();
                                 setState(() {
                                   _quantity += (_unit == 'kg' ? 0.5 : 1);
                                 });
@@ -370,13 +424,8 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'JEDNOSTKA',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textDim,
-                          letterSpacing: 0.8,
-                        ),
+                        'Jednostka',
+                        style: AppTypography.labelSmall,
                       ),
                       const SizedBox(height: 6),
                       Container(
@@ -384,22 +433,33 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
                         decoration: BoxDecoration(
                           color: AppColors.card,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(color: AppColors.borderLight),
                         ),
                         child: Row(
                           children: [
                             Expanded(
                               child: GestureDetector(
-                                onTap: () => setState(() {
-                                  _unit = 'kg';
-                                  _quantity = 1.0;
-                                }),
+                                onTap: () {
+                                  if (_unit != 'kg') {
+                                    HapticFeedback.selectionClick();
+                                    setState(() {
+                                      _unit = 'kg';
+                                      _quantity = 1.0;
+                                    });
+                                  }
+                                },
                                 child: Container(
                                   decoration: BoxDecoration(
                                     color: _unit == 'kg'
-                                        ? AppColors.emeraldDeep
+                                        ? AppColors.emeraldNeon.withValues(alpha: 0.18)
                                         : Colors.transparent,
                                     borderRadius: BorderRadius.circular(10),
+                                    border: _unit == 'kg'
+                                        ? Border.all(
+                                            color: AppColors.emeraldNeon.withValues(alpha: 0.6),
+                                            width: 1.0,
+                                          )
+                                        : null,
                                   ),
                                   alignment: Alignment.center,
                                   child: Text(
@@ -417,16 +477,27 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
                             ),
                             Expanded(
                               child: GestureDetector(
-                                onTap: () => setState(() {
-                                  _unit = 'szt.';
-                                  _quantity = 5.0;
-                                }),
+                                onTap: () {
+                                  if (_unit != 'szt.') {
+                                    HapticFeedback.selectionClick();
+                                    setState(() {
+                                      _unit = 'szt.';
+                                      _quantity = 5.0;
+                                    });
+                                  }
+                                },
                                 child: Container(
                                   decoration: BoxDecoration(
                                     color: _unit == 'szt.'
-                                        ? AppColors.emeraldDeep
+                                        ? AppColors.emeraldNeon.withValues(alpha: 0.18)
                                         : Colors.transparent,
                                     borderRadius: BorderRadius.circular(10),
+                                    border: _unit == 'szt.'
+                                        ? Border.all(
+                                            color: AppColors.emeraldNeon.withValues(alpha: 0.6),
+                                            width: 1.0,
+                                          )
+                                        : null,
                                   ),
                                   alignment: Alignment.center,
                                   child: Text(
@@ -455,13 +526,8 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
 
             // Notes field
             const Text(
-              'NOTATKI / WSKAZÓWKI (OPCJONALNIE)',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textDim,
-                letterSpacing: 0.8,
-              ),
+              'Notatki i wskazówki (opcjonalnie)',
+              style: AppTypography.labelSmall,
             ),
             const SizedBox(height: 6),
             TextField(
@@ -473,18 +539,22 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
                 fillColor: AppColors.card,
                 hintText: 'np. Za starym rowem, na skraju mchów po ulewie...',
                 hintStyle: const TextStyle(color: AppColors.textDim, fontSize: 12),
+                prefixIcon: const Padding(
+                  padding: EdgeInsets.only(bottom: 24),
+                  child: Icon(Icons.sticky_note_2_rounded, size: 18, color: AppColors.textDim),
+                ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
+                  borderSide: const BorderSide(color: AppColors.borderLight),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
+                  borderSide: const BorderSide(color: AppColors.borderLight),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.emeraldNeon),
+                  borderSide: const BorderSide(color: AppColors.emeraldNeon, width: 1.2),
                 ),
               ),
             ),
@@ -515,6 +585,261 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Upgraded Species Search and Selection Bottom Sheet
+class _SpeciesPickerSheet extends StatefulWidget {
+  final String selectedMushroomId;
+
+  const _SpeciesPickerSheet({
+    required this.selectedMushroomId,
+  });
+
+  @override
+  State<_SpeciesPickerSheet> createState() => _SpeciesPickerSheetState();
+}
+
+class _SpeciesPickerSheetState extends State<_SpeciesPickerSheet> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    const all = MushroomDatabase.allMushrooms;
+    final filtered = _searchQuery.isEmpty
+        ? all
+        : all.where((m) {
+            final q = _searchQuery.toLowerCase();
+            return m.namePl.toLowerCase().contains(q) ||
+                m.latin.toLowerCase().contains(q);
+          }).toList();
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 16,
+        bottom: bottomInset + 16,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.5),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Drag handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: AppColors.borderLight,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Wybierz gatunek grzyba',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close_rounded, color: AppColors.textDim, size: 20),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Search Field
+          TextField(
+            controller: _searchController,
+            style: const TextStyle(color: Colors.white, fontSize: 13),
+            onChanged: (val) => setState(() => _searchQuery = val.trim()),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: AppColors.card,
+              hintText: 'Szukaj gatunku (np. borowik, pieprznik)...',
+              hintStyle: const TextStyle(color: AppColors.textDim, fontSize: 12.5),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                size: 18,
+                color: AppColors.emeraldNeon,
+              ),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear_rounded, size: 16, color: AppColors.textDim),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                    )
+                  : null,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.borderLight),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.borderLight),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.emeraldNeon, width: 1.2),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Species List
+          Expanded(
+            child: filtered.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.search_off_rounded,
+                            size: 36,
+                            color: AppColors.textDim.withValues(alpha: 0.6),
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'Brak gatunków o tej nazwie',
+                            style: TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) => const Divider(
+                      color: AppColors.borderLight,
+                      height: 1,
+                      indent: 56,
+                    ),
+                    itemBuilder: (context, index) {
+                      final m = filtered[index];
+                      final isSelected = m.id == widget.selectedMushroomId;
+
+                      return Material(
+                        color: Colors.transparent,
+                        child: ListTile(
+                          onTap: () {
+                            unawaited(HapticFeedback.selectionClick());
+                            Navigator.of(context).pop(m.id);
+                          },
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
+                          leading: MushroomPhotoWidget(
+                            assetPath: m.photoAsset,
+                            size: 42,
+                            borderRadius: 8,
+                            borderColor: isSelected
+                                ? AppColors.emeraldNeon
+                                : AppColors.borderLight,
+                          ),
+                          title: Text(
+                            m.namePl,
+                            style: TextStyle(
+                              color: isSelected ? AppColors.emeraldNeon : Colors.white,
+                              fontSize: 13.5,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  m.latin,
+                                  style: const TextStyle(
+                                    color: AppColors.textDim,
+                                    fontSize: 11,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: m.edibilityColor.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  m.edibility,
+                                  style: TextStyle(
+                                    color: m.edibilityColor,
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          trailing: isSelected
+                              ? const Icon(
+                                  Icons.check_circle_rounded,
+                                  color: AppColors.emeraldNeon,
+                                  size: 20,
+                                )
+                              : null,
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
       ),
     );
   }

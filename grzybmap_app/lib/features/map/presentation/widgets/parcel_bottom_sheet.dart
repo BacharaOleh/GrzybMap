@@ -5,7 +5,6 @@ import '../../../parcel_inspector/domain/models.dart';
 import '../../../weather/domain/models.dart';
 import '../../../mushroom_radar/domain/models.dart';
 import '../../../mushroom_radar/service/match_engine.dart';
-import 'info_card.dart';
 import 'mushroom_photo_widget.dart';
 import 'mushroom_detail_sheet.dart';
 
@@ -146,7 +145,7 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
             color: AppColors.surfaceElevated,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             border: Border.fromBorderSide(
-              BorderSide(color: AppColors.emeraldNeon, width: 0.8),
+              BorderSide(color: AppColors.borderLight, width: 0.8),
             ),
             boxShadow: [
               BoxShadow(
@@ -179,12 +178,12 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: AppColors.emeraldNeon.withValues(alpha: 0.15),
+                        color: AppColors.emeraldNeon.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.emeraldNeon.withValues(alpha: 0.3)),
+                        border: Border.all(color: AppColors.emeraldNeon.withValues(alpha: 0.25)),
                       ),
                       alignment: Alignment.center,
-                      child: const Text('🌲', style: TextStyle(fontSize: 20)),
+                      child: const Icon(Icons.park_rounded, color: AppColors.emeraldNeon, size: 22),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -221,8 +220,8 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: AppColors.card,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.borderLight),
+                    borderRadius: AppRadii.cardRadius,
+                    border: Border.all(color: AppColors.borderLight, width: 0.8),
                   ),
                   child: Column(
                     children: [
@@ -241,8 +240,17 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                       _buildIdentityItem(
                         'Status prawny',
                         parcel.status.code == 'GOSP'
-                            ? '🟢 Zbiór dozwolony (Lasy Państwowe)'
-                            : '🔴 Zakaz zbioru (${parcel.status.labelPl})',
+                            ? 'Zbiór dozwolony (Lasy Państwowe)'
+                            : 'Zakaz zbioru (${parcel.status.labelPl})',
+                        leadingValueWidget: Icon(
+                          parcel.status.code == 'GOSP'
+                              ? Icons.check_circle_rounded
+                              : Icons.cancel_rounded,
+                          size: 13,
+                          color: parcel.status.code == 'GOSP'
+                              ? AppColors.emeraldNeon
+                              : AppColors.danger,
+                        ),
                       ),
                       const Divider(color: AppColors.borderLight, height: 14),
                       _buildIdentityItem('Adres leśny BDL', parcel.address),
@@ -270,7 +278,7 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
     );
   }
 
-  Widget _buildIdentityItem(String label, String value) {
+  Widget _buildIdentityItem(String label, String value, {Widget? leadingValueWidget}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -280,16 +288,27 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
         ),
         const SizedBox(width: 8),
         Flexible(
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-            textAlign: TextAlign.end,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (leadingValueWidget != null) ...[
+                leadingValueWidget,
+                const SizedBox(width: 5),
+              ],
+              Flexible(
+                child: Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.end,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -370,22 +389,22 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 11,
-                        vertical: 5,
+                        horizontal: 10,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: parcel.status.code == 'GOSP'
-                            ? AppColors.emeraldNeon
-                            : parcel.status.color.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: parcel.status.code == 'GOSP'
-                            ? [
-                                BoxShadow(
-                                  color: AppColors.emeraldNeon.withValues(alpha: 0.45),
-                                  blurRadius: 10,
-                                ),
-                              ]
-                            : null,
+                        color: (parcel.status.code == 'GOSP'
+                                ? AppColors.emeraldNeon
+                                : parcel.status.color)
+                            .withValues(alpha: 0.12),
+                        borderRadius: AppRadii.pillRadius,
+                        border: Border.all(
+                          color: (parcel.status.code == 'GOSP'
+                                  ? AppColors.emeraldNeon
+                                  : parcel.status.color)
+                              .withValues(alpha: 0.25),
+                          width: 0.8,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -395,7 +414,7 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                             height: 6,
                             decoration: BoxDecoration(
                               color: parcel.status.code == 'GOSP'
-                                  ? Colors.black
+                                  ? AppColors.emeraldNeon
                                   : parcel.status.color,
                               shape: BoxShape.circle,
                             ),
@@ -403,15 +422,15 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                           const SizedBox(width: 5),
                           Text(
                             parcel.status.code == 'GOSP'
-                                ? 'ZBIÓR DOZWOLONY'
-                                : 'ZAKAZ ZBIORU',
+                                ? 'Zbiór dozwolony'
+                                : 'Zakaz zbioru',
                             style: TextStyle(
                               color: parcel.status.code == 'GOSP'
-                                  ? Colors.black
+                                  ? AppColors.emeraldNeon
                                   : parcel.status.color,
-                              fontWeight: FontWeight.w900,
+                              fontWeight: FontWeight.w700,
                               fontSize: 10.5,
-                              letterSpacing: 0.4,
+                              letterSpacing: 0.2,
                             ),
                           ),
                         ],
@@ -425,20 +444,25 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
-                      children: [
-                        Text('🍄', style: TextStyle(fontSize: 16)),
-                        SizedBox(width: 6),
-                        Text(
-                          'RADAR GRZYBIARZA',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.6,
-                            color: AppColors.emeraldNeon,
+                    const Expanded(
+                      child: Row(
+                        children: [
+                          Text('🍄', style: TextStyle(fontSize: 16)),
+                          SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              'RADAR GRZYBIARZA',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.6,
+                                color: AppColors.emeraldNeon,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     Icon(
                       Icons.arrow_forward_rounded,
@@ -524,131 +548,231 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                 // === 2. FOREST BIOTOPE & WEATHER CONDITIONS ===
                 const Row(
                   children: [
-                    Text('🌲', style: TextStyle(fontSize: 14)),
+                    Icon(Icons.park_rounded, size: 14, color: AppColors.emeraldNeon),
                     SizedBox(width: 6),
                     Text(
-                      'WARUNKI LEŚNE I POGODA',
+                      'Warunki leśne i pogoda',
                       style: TextStyle(
                         fontSize: 11,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.textDim,
-                        letterSpacing: 0.8,
+                        letterSpacing: 0.4,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
 
-                // Habitat + Weather cards
-                Row(
-                  children: [
-                    Expanded(
-                      child: InfoCard(
-                        icon: Icons.forest,
-                        iconColor: AppColors.emeraldNeon,
-                        label: 'TYP LASU',
-                        value: parcel.habitat.namePl,
-                        desc: parcel.habitat.descPl,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: InfoCard(
-                        icon: Icons.water_drop,
-                        iconColor:
-                            weather?.moistureBadgeColor ?? AppColors.skyBlue,
-                        label: 'OPADY (14 DNI)',
-                        value: weather != null
-                            ? '${weather.totalRainMm.toStringAsFixed(1)} mm'
-                            : '-- mm',
-                        desc: weather != null
-                            ? weather.moistureLabel
-                            : 'Stacja niedostępna',
-                      ),
-                    ),
-                  ],
-                ),
-                // Soil metrics banner (W2)
-                if (weather != null &&
-                    (weather.soilTempC != null || weather.soilMoistureM3 != null)) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.card,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.borderLight),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.thermostat,
-                          size: 14,
-                          color: AppColors.goldAmber,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Gleba (6cm): ${weather.soilTempLabel}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textMain,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const Spacer(),
-                        const Icon(
-                          Icons.water,
-                          size: 14,
-                          color: AppColors.skyBlue,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Ściółka: ${weather.soilMoisturePercent}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textMain,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
+                // Unified Biotope & Weather Container
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: AppRadii.cardRadius,
+                    border: Border.all(color: AppColors.borderLight, width: 0.8),
                   ),
-                ] else if (weather == null) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.card,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.white10),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(
-                          Icons.cloud_off,
-                          size: 14,
-                          color: AppColors.textDim,
-                        ),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Brak danych ze stacji pogodowej (ocena neutralna)',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: AppColors.textMuted,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Upper segment: Forest habitat on left and 14-day rainfall on right
+                      Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Left: Forest habitat
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Row(
+                                    children: [
+                                      Icon(
+                                        Icons.park_rounded,
+                                        size: 14,
+                                        color: AppColors.emeraldNeon,
+                                      ),
+                                      SizedBox(width: 5),
+                                      Flexible(
+                                        child: Text(
+                                          'Typ lasu (BDL)',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textDim,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    parcel.habitat.namePl,
+                                    style: const TextStyle(
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    parcel.habitat.descPl,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.textMuted,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 12),
+                            // Right: 14-day rainfall
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.water_drop_rounded,
+                                        size: 14,
+                                        color: weather?.moistureBadgeColor ??
+                                            AppColors.skyBlue,
+                                      ),
+                                      const SizedBox(width: 5),
+                                      const Flexible(
+                                        child: Text(
+                                          'Opady (14 dni)',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textDim,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    weather != null
+                                        ? '${weather.totalRainMm.toStringAsFixed(1)} mm'
+                                        : '-- mm',
+                                    style: const TextStyle(
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    weather != null
+                                        ? weather.moistureLabel
+                                        : 'Stacja niedostępna',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Internal hairline divider
+                      const Divider(
+                        color: AppColors.borderLight,
+                        height: 1,
+                        thickness: 0.6,
+                      ),
+
+                      // Lower segment: Soil temperature (6 cm) and litter moisture
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.02),
+                          borderRadius: const BorderRadius.vertical(
+                            bottom: Radius.circular(16),
                           ),
                         ),
-                      ],
-                    ),
+                        child: weather != null &&
+                                (weather.soilTempC != null ||
+                                    weather.soilMoistureM3 != null)
+                            ? Row(
+                                children: [
+                                  const Icon(
+                                    Icons.thermostat_rounded,
+                                    size: 14,
+                                    color: AppColors.goldAmber,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      'Gleba (6 cm): ${weather.soilTempLabel}',
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textMain,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Icon(
+                                    Icons.waves_rounded,
+                                    size: 14,
+                                    color: AppColors.skyBlue,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      'Ściółka: ${weather.soilMoisturePercent}',
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textMain,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Row(
+                                children: [
+                                  const Icon(
+                                    Icons.cloud_off_rounded,
+                                    size: 14,
+                                    color: AppColors.textDim,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      weather == null
+                                          ? 'Brak danych ze stacji pogodowej (ocena neutralna)'
+                                          : 'Brak pomiaru glebowego dla tego punktu',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textMuted,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
                 const SizedBox(height: 10),
 
                 // === 3. FORESTRY DETAILS SPOILER ===
@@ -664,8 +788,8 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                       backgroundColor: Colors.white,
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: AppRadii.cardRadius,
                       ),
                       elevation: 0,
                     ),
@@ -674,10 +798,10 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                     label: const Text(
                       'Nawiguj do tego wydziału',
                       style: TextStyle(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         fontSize: 14.5,
                         color: Colors.black,
-                        letterSpacing: 0.1,
+                        letterSpacing: -0.1,
                       ),
                     ),
                   ),
@@ -811,7 +935,7 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          height: 310,
+          height: 330,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
@@ -1117,14 +1241,16 @@ class _CarouselMushroomCard extends StatelessWidget {
                   ? AppColors.danger.withValues(alpha: 0.7)
                   : (lookalike != null
                       ? AppColors.goldAmber.withValues(alpha: 0.5)
-                      : AppColors.emeraldNeon.withValues(alpha: 0.55)),
-              width: 1.5,
+                      : AppColors.borderLight),
+              width: hasLethalLookalike ? 1.5 : (lookalike != null ? 1.0 : 0.8),
             ),
             boxShadow: [
               BoxShadow(
                 color: (hasLethalLookalike
                         ? AppColors.danger
-                        : AppColors.emeraldNeon)
+                        : (lookalike != null
+                            ? AppColors.goldAmber
+                            : Colors.black))
                     .withValues(alpha: 0.20),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
@@ -1139,7 +1265,7 @@ class _CarouselMushroomCard extends StatelessWidget {
                 assetPath: m.photoAsset,
                 width: double.infinity,
                 height: 160,
-                borderRadius: 16,
+                borderRadius: 10,
                 borderColor: Colors.white.withValues(alpha: 0.08),
                 borderWidth: 1.0,
               ),

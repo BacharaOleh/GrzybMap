@@ -65,154 +65,203 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void _onLongPressMap(LatLng point) {
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         decoration: BoxDecoration(
           color: AppColors.surfaceElevated,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.borderLight),
         ),
         child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const Text(
-                'Akcja dla wybranego punktu',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Wybierz co chcesz zapisać w tej lokalizacji na mapie:',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: AppColors.textDim),
-              ),
-              const SizedBox(height: 18),
-              // Option 1: Save Mushroom Secret Spot
-              ListTile(
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  SaveSpotDialog.show(
-                    context: context,
-                    location: point,
-                  );
-                },
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  side: const BorderSide(color: AppColors.border),
-                ),
-                tileColor: AppColors.card,
-                leading: Container(
-                  width: 40,
-                  height: 40,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(10),
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  alignment: Alignment.center,
-                  child: const Text('📍', style: TextStyle(fontSize: 20)),
                 ),
-                title: const Text(
-                  'Zapisz sekretne miejsce (Dziennik)',
-                  style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
+                const Text(
+                  'Akcja dla wybranego punktu',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
-                subtitle: const Text(
-                  'Zapisz gatunek i zbiór w prywatnym dzienniku offline',
-                  style: TextStyle(color: AppColors.textDim, fontSize: 11),
+                const SizedBox(height: 4),
+                Text(
+                  'Punkt na mapie: ${point.latitude.toStringAsFixed(4)}°N, ${point.longitude.toStringAsFixed(4)}°E',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textDim,
+                  ),
                 ),
-                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textDim),
-              ),
-              const SizedBox(height: 10),
-              // Option 2: Save Car Parking
-              ListTile(
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  ref.read(mapScreenProvider.notifier).saveCarLocation(point: point);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('🚗 Pozycja auta została zapisana!'),
-                      backgroundColor: AppColors.emeraldDeep,
+                const SizedBox(height: 16),
+                Material(
+                  color: AppColors.card,
+                  clipBehavior: Clip.antiAlias,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: AppRadii.cardRadius,
+                    side: BorderSide(color: AppColors.borderLight),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                    // Option 1: Save Mushroom Secret Spot
+                    ListTile(
+                      onTap: () {
+                        Navigator.of(ctx).pop();
+                        SaveSpotDialog.show(
+                          context: context,
+                          location: point,
+                        );
+                      },
+                      leading: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: AppColors.emeraldNeon.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.bookmark_add_rounded,
+                          size: 20,
+                          color: AppColors.emeraldNeon,
+                        ),
+                      ),
+                      title: const Text(
+                        'Zapisz sekretne miejsce (Dziennik)',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Zapisz gatunek i zbiór w prywatnym dzienniku offline',
+                        style: TextStyle(color: AppColors.textDim, fontSize: 11),
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right_rounded,
+                        size: 16,
+                        color: AppColors.textDim,
+                      ),
                     ),
-                  );
-                },
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  side: const BorderSide(color: AppColors.border),
+                    const Divider(
+                      color: AppColors.borderLight,
+                      height: 1,
+                      thickness: 1,
+                    ),
+                    // Option 2: Save Car Parking
+                    ListTile(
+                      onTap: () {
+                        Navigator.of(ctx).pop();
+                        ref
+                            .read(mapScreenProvider.notifier)
+                            .saveCarLocation(point: point);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Pozycja auta została zapisana'),
+                          ),
+                        );
+                      },
+                      leading: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: AppColors.amberWarn.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.directions_car_filled_rounded,
+                          size: 20,
+                          color: AppColors.amberWarn,
+                        ),
+                      ),
+                      title: const Text(
+                        'Zapisz zaparkowane auto',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Aktywuje kompas i linię bezpiecznego powrotu',
+                        style: TextStyle(color: AppColors.textDim, fontSize: 11),
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right_rounded,
+                        size: 16,
+                        color: AppColors.textDim,
+                      ),
+                    ),
+                    const Divider(
+                      color: AppColors.borderLight,
+                      height: 1,
+                      thickness: 1,
+                    ),
+                    // Option 3: Download Offline Forest Area (10×10 km)
+                    ListTile(
+                      onTap: () {
+                        Navigator.of(ctx).pop();
+                        DownloadAreaDialog.show(
+                          context: context,
+                          center: point,
+                        );
+                      },
+                      leading: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: AppColors.skyBlue.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.download_for_offline_rounded,
+                          size: 20,
+                          color: AppColors.skyBlue,
+                        ),
+                      ),
+                      title: const Text(
+                        'Pobierz rejon offline (10×10 km)',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Zapisuje taksację BDL i opady 14d do pamięci urządzenia',
+                        style: TextStyle(color: AppColors.textDim, fontSize: 11),
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right_rounded,
+                        size: 16,
+                        color: AppColors.textDim,
+                      ),
+                    ),
+                  ],
                 ),
-                tileColor: AppColors.card,
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.amberWarn.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  alignment: Alignment.center,
-                  child: const Text('🚗', style: TextStyle(fontSize: 20)),
-                ),
-                title: const Text(
-                  'Zapisz zaparkowane auto',
-                  style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
-                ),
-                subtitle: const Text(
-                  'Aktywuje kompas i linię bezpiecznego powrotu',
-                  style: TextStyle(color: AppColors.textDim, fontSize: 11),
-                ),
-                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textDim),
-              ),
-              const SizedBox(height: 10),
-              // Option 3: Download Offline Forest Area (10×10 km)
-              ListTile(
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  DownloadAreaDialog.show(
-                    context: context,
-                    center: point,
-                  );
-                },
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  side: const BorderSide(color: AppColors.border),
-                ),
-                tileColor: AppColors.card,
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.emeraldDeep.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  alignment: Alignment.center,
-                  child: const Text('💾', style: TextStyle(fontSize: 20)),
-                ),
-                title: const Text(
-                  'Pobierz rejon offline (10×10 km)',
-                  style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
-                ),
-                subtitle: const Text(
-                  'Zapisuje taksację BDL i opady 14d do pamięci urządzenia',
-                  style: TextStyle(color: AppColors.textDim, fontSize: 11),
-                ),
-                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textDim),
               ),
             ],
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Future<void> _onTapMap(LatLng point) async {
@@ -261,7 +310,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('🚗 Pozycja auta została zapisana!'),
+                  content: Text('Pozycja auta została zapisana'),
                   backgroundColor: AppColors.emeraldDeep,
                 ),
               );
@@ -574,6 +623,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                               children: [
                                 // Pill Tag: "[🍄 6x Borowik]" or "[🍄 Kurki]"
                                 Container(
+
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 8,
                                     vertical: 3.5,
@@ -914,7 +964,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   _onTapMap(place.latLng);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('🌲 Nawigacja do: ${place.shortName}'),
+                      content: Text('Nawigacja do: ${place.shortName}'),
                       backgroundColor: AppColors.emeraldDeep,
                       duration: const Duration(seconds: 2),
                     ),
@@ -930,7 +980,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               _mapController.rotate(0);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('🧭 Zorientowano mapę na Północ (0°)'),
+                  content: Text('Zorientowano mapę na północ (0°)'),
                   backgroundColor: AppColors.emeraldDeep,
                   duration: Duration(seconds: 1),
                 ),
@@ -956,8 +1006,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       SnackBar(
                         content: Text(
                           !showRadars
-                              ? '🍄 Włączono radar grzybów'
-                              : '👁️ Ukryto radar (czysty widok mapy)',
+                              ? 'Włączono radar grzybów'
+                              : 'Ukryto radar (czysty widok mapy)',
                         ),
                         backgroundColor: !showRadars
                             ? AppColors.emeraldDeep
@@ -1033,7 +1083,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         'GPS';
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('📍 Zlokalizowano! Źródło: $source'),
+                        content: Text('Zlokalizowano! Źródło: $source'),
                         backgroundColor: AppColors.emeraldDeep,
                         duration: const Duration(seconds: 3),
                       ),
@@ -1075,7 +1125,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.surfaceElevated.withValues(alpha: 0.94),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.skyBlue.withValues(alpha: 0.6)),
+                    border: Border.all(color: AppColors.borderLight),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.5),
@@ -1090,26 +1140,69 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('🌧️', style: TextStyle(fontSize: 13)),
+                          const Icon(
+                            Icons.water_drop_rounded,
+                            size: 14,
+                            color: AppColors.skyBlue,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             isRainActive
-                                ? 'Suma deszczu za 14 dni'
+                                ? 'Radar opadów 14 dni'
                                 : 'Radar chmur na żywo',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 6),
+                      Container(
+                        width: 200,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(2),
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF60A5FA),
+                              Color(0xFF34D399),
+                              Color(0xFFFBBF24),
+                              Color(0xFFEF4444),
+                            ],
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 3),
-                      Text(
-                        isRainActive
-                            ? '🟦 >35 mm  🟩 22–35 mm  🟨 12–22 mm'
-                            : '🟦 Lekki  🟨 Umiarkowany  🟥 Ulewa',
-                        style: const TextStyle(color: AppColors.textDim, fontSize: 10),
+                      SizedBox(
+                        width: 200,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              isRainActive ? '12 mm' : 'Lekki',
+                              style: const TextStyle(
+                                fontSize: 9,
+                                color: AppColors.textDim,
+                              ),
+                            ),
+                            Text(
+                              isRainActive ? '22 mm' : 'Umiarkowany',
+                              style: const TextStyle(
+                                fontSize: 9,
+                                color: AppColors.textDim,
+                              ),
+                            ),
+                            Text(
+                              isRainActive ? '35+ mm' : 'Ulewa',
+                              style: const TextStyle(
+                                fontSize: 9,
+                                color: AppColors.textDim,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -1175,7 +1268,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ref.read(mapScreenProvider.notifier).setTargetMushroom(null);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('🎯 Zresetowano filtr grzyba (Wszystkie gatunki)'),
+                        content: Text('Zresetowano filtr grzyba (Wszystkie gatunki)'),
                         backgroundColor: AppColors.emeraldDeep,
                         duration: Duration(seconds: 2),
                       ),
@@ -1195,8 +1288,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       SnackBar(
                         content: Text(
                           userLoc != null
-                              ? '🚗 Zapisano auto w Twojej pozycji!'
-                              : '🚗 Zapisano auto w centrum mapy (Włącz GPS dla dystansu)',
+                              ? 'Zapisano auto w Twojej pozycji'
+                              : 'Zapisano auto w centrum mapy (włącz GPS dla dystansu)',
                         ),
                         backgroundColor: AppColors.emeraldDeep,
                         duration: const Duration(seconds: 3),
@@ -1213,7 +1306,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       SnackBar(
                         content: Text(
                           isActive
-                              ? '🧭 Nawigacja: linia powrotu do auta włączona'
+                              ? 'Nawigacja: linia powrotu do auta włączona'
                               : 'Ukryto linię nawigacji',
                         ),
                         backgroundColor: AppColors.card,
@@ -1230,7 +1323,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ref.read(mapScreenProvider.notifier).clearCarLocation();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('🚗 Usunięto znacznik auta.'),
+                        content: Text('Usunięto znacznik auta'),
                         backgroundColor: AppColors.card,
                         duration: Duration(seconds: 2),
                       ),

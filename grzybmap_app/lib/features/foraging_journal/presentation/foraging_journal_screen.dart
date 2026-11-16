@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../map/presentation/widgets/mushroom_photo_widget.dart';
 import '../../mushroom_radar/data/mushroom_database.dart';
 import '../domain/models/foraging_spot.dart';
 import 'controllers/foraging_journal_controller.dart';
@@ -26,8 +28,8 @@ class ForagingJournalScreen extends ConsumerWidget {
         ),
         title: const Row(
           children: [
-            Text('📓', style: TextStyle(fontSize: 18)),
-            SizedBox(width: 8),
+            Icon(Icons.auto_stories_rounded, color: AppColors.emeraldNeon, size: 20),
+            SizedBox(width: 10),
             Text(
               'Dziennik Zbiorów',
               style: TextStyle(
@@ -50,13 +52,14 @@ class ForagingJournalScreen extends ConsumerWidget {
               color: state.isLayerVisible ? AppColors.emeraldNeon : AppColors.textDim,
             ),
             onPressed: () {
+              HapticFeedback.selectionClick();
               ref.read(foragingJournalProvider.notifier).toggleLayerVisibility();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
                     state.isLayerVisible
-                        ? '🙈 Miejscówki ukryte na mapie'
-                        : '👁️ Miejscówki widoczne na mapie',
+                        ? 'Miejscówki ukryte na mapie'
+                        : 'Miejscówki widoczne na mapie',
                   ),
                   backgroundColor: AppColors.card,
                   duration: const Duration(seconds: 2),
@@ -69,7 +72,7 @@ class ForagingJournalScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          // Stats Banner
+          // Stats Banner with tabular figures & neutral dividers
           _JournalStatsHeader(
             totalCount: state.totalSpotsCount,
             totalKg: state.estimatedTotalKg,
@@ -99,7 +102,7 @@ class ForagingJournalScreen extends ConsumerWidget {
                                   .deleteSpot(spot.id);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('🗑️ Usunięto miejscówkę z dziennika'),
+                                  content: Text('Usunięto miejscówkę z dziennika'),
                                   backgroundColor: AppColors.card,
                                   duration: Duration(seconds: 2),
                                 ),
@@ -129,17 +132,17 @@ class _JournalStatsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        borderRadius: AppRadii.cardRadius,
+        border: Border.all(color: AppColors.borderLight),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -150,10 +153,11 @@ class _JournalStatsHeader extends StatelessWidget {
             label: 'Miejscówki',
             value: totalCount.toString(),
             unit: 'zapisanych',
-            icon: Icons.place_rounded,
-            color: const Color(0xFF8B5CF6),
+            icon: Icons.bookmark_added_rounded,
+            color: AppColors.textMain,
+            accentColor: AppColors.emeraldNeon,
           ),
-          Container(width: 1, height: 40, color: AppColors.border),
+          Container(width: 1, height: 32, color: AppColors.borderLight),
           _StatColumn(
             label: 'Łączny zbiór',
             value: totalKg == totalKg.roundToDouble()
@@ -162,14 +166,16 @@ class _JournalStatsHeader extends StatelessWidget {
             unit: 'kg szac.',
             icon: Icons.scale_rounded,
             color: AppColors.emeraldNeon,
+            accentColor: AppColors.emeraldNeon,
           ),
-          Container(width: 1, height: 40, color: AppColors.border),
+          Container(width: 1, height: 32, color: AppColors.borderLight),
           const _StatColumn(
             label: 'Prywatność',
             value: '100%',
             unit: 'Offline',
-            icon: Icons.lock_outline_rounded,
-            color: AppColors.amberWarn,
+            icon: Icons.shield_outlined,
+            color: AppColors.skyBlue,
+            accentColor: AppColors.skyBlue,
           ),
         ],
       ),
@@ -183,6 +189,7 @@ class _StatColumn extends StatelessWidget {
   final String unit;
   final IconData icon;
   final Color color;
+  final Color? accentColor;
 
   const _StatColumn({
     required this.label,
@@ -190,35 +197,45 @@ class _StatColumn extends StatelessWidget {
     required this.unit,
     required this.icon,
     required this.color,
+    this.accentColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 4),
+            Icon(icon, size: 14, color: accentColor ?? color),
+            const SizedBox(width: 5),
             Text(
               value,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
                 color: color,
+                letterSpacing: -0.3,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 3),
         Text(
           unit,
-          style: const TextStyle(fontSize: 11, color: Colors.white70),
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textMuted,
+          ),
         ),
+        const SizedBox(height: 1),
         Text(
           label,
-          style: const TextStyle(fontSize: 10, color: AppColors.textDim),
+          style: AppTypography.microLabel,
         ),
       ],
     );
@@ -234,49 +251,112 @@ class _SpeciesFilterBar extends ConsumerWidget {
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
         children: [
           Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: const Text('Wszystkie'),
-              selected: selectedFilter == null,
-              onSelected: (_) => ref
-                  .read(foragingJournalProvider.notifier)
-                  .setFilterMushroom(null),
-              backgroundColor: AppColors.card,
-              selectedColor: AppColors.emeraldDeep,
-              labelStyle: TextStyle(
-                color: selectedFilter == null ? Colors.white : AppColors.textDim,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-              side: const BorderSide(color: AppColors.border),
+            child: _FilterPill(
+              label: 'Wszystkie',
+              isSelected: selectedFilter == null,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                ref
+                    .read(foragingJournalProvider.notifier)
+                    .setFilterMushroom(null);
+              },
             ),
           ),
           ...MushroomDatabase.allMushrooms.map((m) {
             final isSelected = selectedFilter == m.id;
             return Padding(
               padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                label: Text(m.namePl),
-                selected: isSelected,
-                onSelected: (_) => ref
-                    .read(foragingJournalProvider.notifier)
-                    .setFilterMushroom(isSelected ? null : m.id),
-                backgroundColor: AppColors.card,
-                selectedColor: AppColors.emeraldDeep,
-                labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : AppColors.textDim,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-                side: const BorderSide(color: AppColors.border),
+              child: _FilterPill(
+                label: m.namePl,
+                isSelected: isSelected,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  ref
+                      .read(foragingJournalProvider.notifier)
+                      .setFilterMushroom(isSelected ? null : m.id);
+                },
               ),
             );
           }),
         ],
+      ),
+    );
+  }
+}
+
+class _FilterPill extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _FilterPill({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeOut,
+      decoration: BoxDecoration(
+        color: isSelected
+            ? AppColors.emeraldNeon.withValues(alpha: 0.16)
+            : const Color(0x0FFFFFFF),
+        borderRadius: AppRadii.pillRadius,
+        border: Border.all(
+          color: isSelected ? AppColors.emeraldNeon : AppColors.borderLight,
+          width: 1.0,
+        ),
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: AppColors.emeraldNeon.withValues(alpha: 0.25),
+                  blurRadius: 8,
+                  offset: const Offset(0, 1),
+                ),
+              ]
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: AppRadii.pillRadius,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isSelected) ...[
+                  Container(
+                    width: 6,
+                    height: 6,
+                    margin: const EdgeInsets.only(right: 6),
+                    decoration: const BoxDecoration(
+                      color: AppColors.emeraldNeon,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : AppColors.textMuted,
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -293,15 +373,20 @@ class _SpotCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mushroom = MushroomDatabase.allMushrooms.firstWhere(
+      (m) => m.id == spot.mushroomId,
+      orElse: () => MushroomDatabase.allMushrooms.first,
+    );
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        borderRadius: AppRadii.cardRadius,
+        border: Border.all(color: AppColors.borderLight),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
+            color: Colors.black.withValues(alpha: 0.18),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -311,24 +396,17 @@ class _SpotCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: AppRadii.cardRadius,
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                // Mushroom Icon Badge
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: const Text('🍄', style: TextStyle(fontSize: 22)),
+                // Botanical Photo Thumbnail with concentric radius (10px inside 16px card with 12px padding)
+                MushroomPhotoWidget(
+                  assetPath: mushroom.photoAsset,
+                  size: 46,
+                  borderRadius: AppRadii.inner,
+                  borderColor: AppColors.borderLight,
                 ),
                 const SizedBox(width: 12),
 
@@ -339,10 +417,9 @@ class _SpotCard extends StatelessWidget {
                     children: [
                       Text(
                         spot.title,
-                        style: const TextStyle(
+                        style: AppTypography.titleMedium.copyWith(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -356,39 +433,40 @@ class _SpotCard extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Text(
                         spot.formattedDate,
-                        style: const TextStyle(
-                          fontSize: 11,
+                        style: AppTypography.microLabel.copyWith(
                           color: AppColors.textDim,
+                          fontFeatures: const [FontFeature.tabularFigures()],
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                // Quantity badge
+                // Weight Pill with tabular figures
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: AppColors.card,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.border),
+                    color: AppColors.surface,
+                    borderRadius: AppRadii.pillRadius,
+                    border: Border.all(color: AppColors.borderLight),
                   ),
                   child: Text(
                     spot.humanQuantity,
                     style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textMain,
+                      fontFeatures: [FontFeature.tabularFigures()],
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 6),
                 const Icon(
                   Icons.arrow_forward_ios_rounded,
-                  size: 14,
+                  size: 13,
                   color: AppColors.textDim,
                 ),
               ],
@@ -417,10 +495,14 @@ class _EmptyJournalView extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.surfaceElevated,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AppColors.borderLight),
               ),
               alignment: Alignment.center,
-              child: const Text('📍', style: TextStyle(fontSize: 32)),
+              child: Icon(
+                Icons.bookmark_border_rounded,
+                size: 34,
+                color: AppColors.emeraldNeon.withValues(alpha: 0.8),
+              ),
             ),
             const SizedBox(height: 18),
             const Text(
