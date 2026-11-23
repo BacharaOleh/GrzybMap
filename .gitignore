@@ -21,7 +21,10 @@ dist-ssr/
 
 # Flutter / Dart / Android / iOS
 **/.dart_tool/
-**/build/
+**/build/*
+!grzybmap_app/build/web/
+!grzybmap_app/build/web/**
+grzybmap_app/build/web/*.apk
 **/.pub-cache/
 **/.pub/
 **/.flutter-plugins-dependencies

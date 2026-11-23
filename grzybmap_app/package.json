@@ -1,0 +1,9 @@
+{
+  "name": "grzybmap-app",
+  "version": "1.0.0",
+  "description": "GrzybMap Flutter Web & Forester Dispatcher Server",
+  "main": "server.cjs",
+  "scripts": {
+    "start": "node server.cjs"
+  }
+}

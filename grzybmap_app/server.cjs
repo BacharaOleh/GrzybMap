@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-const PORT = 8088;
+const PORT = process.env.PORT || 8088;
 const WEB_DIR = path.join(__dirname, 'build', 'web');
 
 const MIME_TYPES = {
