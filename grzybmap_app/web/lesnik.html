@@ -942,6 +942,11 @@
     </div>
 
     <div class="header-tools">
+      <button class="btn btn-emerald" onclick="openNewReportModal()" title="Zarejestruj nowe zdarzenie w lesie">
+        <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span>+ Zgłoś w terenie</span>
+      </button>
+
       <button class="btn" onclick="fitAllMarkers()" title="Pokaż wszystkie zgłoszenia na mapie">
         <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
         <span class="btn-text-hide">Wycentruj</span>
@@ -994,6 +999,17 @@
           </span>
           <span class="switch">
             <input type="checkbox" id="bdl-checkbox" onchange="toggleBdlLayer(this.checked)">
+            <span class="slider"></span>
+          </span>
+        </label>
+
+        <label class="bdl-toggle-row" title="Wyświetla strefy zakazu wstępu: zręby, prace harwesterów i młodniki do 4m (art. 26 ustawy o lasach)">
+          <span style="display:flex; align-items:center; gap:6px;">
+            <svg class="icon icon-sm" style="color:var(--amber);" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Strefy prac ZUL / Zakaz wstępu
+          </span>
+          <span class="switch">
+            <input type="checkbox" id="zones-checkbox" onchange="toggleZonesLayer(this.checked)">
             <span class="slider"></span>
           </span>
         </label>
@@ -1103,6 +1119,68 @@
     </div>
   </div>
 
+  <!-- New Incident Modal -->
+  <div class="modal-overlay" id="new-report-modal" onclick="closeNewReportModal(event)">
+    <div class="modal-card" style="max-width: 540px;" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <div class="modal-title">
+          <svg class="icon icon-lg" style="color:var(--emerald-neon);" viewBox="0 0 24 24"><path d="M12 2l-7 14h5l-3 6h10l-3-6h5z"/></svg>
+          Rejestracja Zdarzenia w Lesie
+        </div>
+        <button class="close-btn" onclick="closeNewReportModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div>
+            <label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Kategoria zdarzenia:</label>
+            <select id="new-category" class="modal-textarea" style="min-height:38px; margin-top:4px;">
+              <option value="fallen_tree">Wiatrołom / Drzewo blokujące drogę pożarową</option>
+              <option value="trash">Dzikie wysypisko śmieci / Odpady w lesie</option>
+              <option value="fire_hazard">Zagrożenie pożarowe / Ognisko</option>
+              <option value="vandalism">Uszkodzenie infrastruktury / Szlaban</option>
+            </select>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div>
+              <label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Nadleśnictwo:</label>
+              <input type="text" id="new-nadlesnictwo" class="modal-textarea" style="min-height:38px; margin-top:4px;" value="Chojnów" placeholder="np. Chojnów">
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Oddział leśny (BDL):</label>
+              <input type="text" id="new-oddzial" class="modal-textarea" style="min-height:38px; margin-top:4px;" value="142b" placeholder="np. 142b">
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div>
+              <label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Szerokość (Lat):</label>
+              <input type="number" step="0.0001" id="new-lat" class="modal-textarea" style="min-height:38px; margin-top:4px;">
+            </div>
+            <div>
+              <label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Długość (Lng):</label>
+              <input type="number" step="0.0001" id="new-lng" class="modal-textarea" style="min-height:38px; margin-top:4px;">
+            </div>
+          </div>
+
+          <div>
+            <label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Opis sytuacji w terenie:</label>
+            <textarea id="new-desc" class="modal-textarea" placeholder="Opisz stopień zagrożenia, przejezdność drogi itp."></textarea>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
+            <button class="btn" onclick="closeNewReportModal()">Anuluj</button>
+            <button class="btn btn-emerald" onclick="submitNewReport()">
+              <svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              Zapisz i nanieś na mapę
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Pill -->
   <div class="toast" id="toast">
     <svg class="icon icon-sm" style="color:var(--emerald-neon);" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1177,8 +1255,8 @@
     baseLayers.osm.addTo(map);
     let activeBaseLayerKey = 'osm';
 
-    // BDL WMS Layer (Granice oddziałów leśnych z Banku Danych o Lasach)
-    const bdlWmsLayer = L.tileLayer.wms('https://mapserver.bdl.lasy.gov.pl/ArcGIS/services/WMS_BDL/MapServer/WMSServer', {
+    // BDL WMS Layer (Granice oddziałów leśnych z Banku Danych o Lasach via proxy)
+    const bdlWmsLayer = L.tileLayer.wms('/api/bdl', {
       layers: '5', // Oddziały leśne
       format: 'image/png',
       transparent: true,
@@ -1186,6 +1264,65 @@
       maxZoom: 19,
       attribution: '&copy; Bank Danych o Lasach (Lasy Państwowe)'
     });
+
+    // Active Forestry Work & Prohibition Zones (Prace pozyskowe ZUL i młodniki do 4m)
+    const zonesLayer = L.featureGroup();
+    const zonePolygons = [
+      {
+        name: 'Prace pozyskowe (Wycinka ZUL)',
+        desc: 'Aktywna praca harwestera i zrywka drewna. Ścisły zakaz wstępu na podstawie art. 26 ust. 3 ustawy o lasach.',
+        nadl: 'Chojnów',
+        oddz: '143c',
+        coords: [
+          [52.0545, 21.3680],
+          [52.0585, 21.3735],
+          [52.0560, 21.3810],
+          [52.0520, 21.3750]
+        ],
+        color: '#EF4444'
+      },
+      {
+        name: 'Młodnik do 4m (Ochrona prawna)',
+        desc: 'Uprawa leśna w fazie odnowienia. Zbiór grzybów i wstęp zabroniony pod rygorem mandatu karnego.',
+        nadl: 'Chojnów',
+        oddz: '144a',
+        coords: [
+          [52.0480, 21.3700],
+          [52.0515, 21.3725],
+          [52.0495, 21.3790],
+          [52.0460, 21.3760]
+        ],
+        color: '#F59E0B'
+      }
+    ];
+
+    zonePolygons.forEach(z => {
+      const poly = L.polygon(z.coords, {
+        color: z.color,
+        fillColor: z.color,
+        fillOpacity: 0.22,
+        weight: 2,
+        dashArray: '6, 6'
+      });
+      poly.bindPopup(`
+        <div class="popup-box">
+          <div class="popup-title" style="color:${z.color};">⚠️ ${z.name}</div>
+          <div class="popup-sub">Nadl. ${z.nadl}, oddz. ${z.oddz}</div>
+          <div class="popup-desc">${z.desc}</div>
+        </div>
+      `);
+      zonesLayer.addLayer(poly);
+    });
+
+    function toggleZonesLayer(enabled) {
+      if (enabled) {
+        zonesLayer.addTo(map);
+        showToast('Włączono strefy zakazu wstępu (prace ZUL)');
+      } else {
+        map.removeLayer(zonesLayer);
+        showToast('Wyłączono strefy zakazu wstępu');
+      }
+    }
 
     const markersGroup = L.featureGroup().addTo(map);
 
@@ -1687,9 +1824,73 @@
       }, 3200);
     }
 
+    // --- New Report Handlers ---
+    function openNewReportModal() {
+      const center = map.getCenter();
+      document.getElementById('new-lat').value = center.lat.toFixed(5);
+      document.getElementById('new-lng').value = center.lng.toFixed(5);
+      document.getElementById('new-desc').value = '';
+      document.getElementById('new-report-modal').classList.add('open');
+    }
+
+    function closeNewReportModal(e) {
+      if (e && e.target !== e.currentTarget && !e.target.classList.contains('close-btn')) return;
+      document.getElementById('new-report-modal').classList.remove('open');
+    }
+
+    async function submitNewReport() {
+      const cat = document.getElementById('new-category').value;
+      const nadl = document.getElementById('new-nadlesnictwo').value.trim() || 'Chojnów';
+      const oddz = document.getElementById('new-oddzial').value.trim() || '-';
+      const lat = parseFloat(document.getElementById('new-lat').value);
+      const lng = parseFloat(document.getElementById('new-lng').value);
+      const desc = document.getElementById('new-desc').value.trim();
+
+      if (isNaN(lat) || isNaN(lng)) {
+        showToast('Nieprawidłowe współrzędne GPS');
+        return;
+      }
+
+      const payload = {
+        category: cat,
+        nadlesnictwo: nadl,
+        oddzial: oddz,
+        latitude: lat,
+        longitude: lng,
+        description: desc || 'Zgłoszenie zarejestrowane przez Straż Leśną',
+        status: 'pending',
+        confirmationsCount: 1,
+        createdAt: new Date().toISOString()
+      };
+
+      try {
+        const res = await fetch('/api/reports', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const result = await res.json();
+          showToast('Zarejestrowano nowe zdarzenie!');
+          closeNewReportModal();
+          await fetchReports(true);
+          if (result.report && result.report.id) {
+            selectReport(result.report.id, true);
+          }
+        } else {
+          showToast('Błąd zapisu zgłoszenia');
+        }
+      } catch (err) {
+        showToast('Błąd połączenia z serwerem');
+      }
+    }
+
     // --- Keyboard Shortcut (Esc closes modal) ---
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closePhotoModal();
+      if (e.key === 'Escape') {
+        closePhotoModal();
+        closeNewReportModal();
+      }
     });
 
     // --- Polling: Auto-refresh every 12 seconds ---
