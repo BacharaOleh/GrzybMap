@@ -115,7 +115,12 @@ class TacticalIslandBar extends StatelessWidget {
                           ),
                         ),
                       ),
-                      icon: const MushroomVectorIcon(size: 21),
+                      icon: MushroomVectorIcon(
+                        size: 21,
+                        color: (isRadarsActive || targetMushroomName != null)
+                            ? AppColors.emeraldNeon
+                            : Colors.white70,
+                      ),
                       label: targetMushroomName ?? 'Radary',
                       labelColor: targetMushroomName != null
                           ? AppColors.emeraldNeon
@@ -351,23 +356,26 @@ class _TacticalTileCardState extends State<_TacticalTileCard> {
 /// Custom Vector Painter for modern mushroom icon (Zero Emojis).
 class MushroomVectorIcon extends StatelessWidget {
   final double size;
-  final Color capColor;
-  final Color stemColor;
+  final Color? color;
+  final Color? capColor;
+  final Color? stemColor;
 
   const MushroomVectorIcon({
     super.key,
-    this.size = 22,
-    this.capColor = const Color(0xFFC084FC),
-    this.stemColor = const Color(0xFFF3E8FF),
+    this.size = 21,
+    this.color,
+    this.capColor,
+    this.stemColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = color ?? capColor ?? AppColors.emeraldNeon;
     return CustomPaint(
       size: Size(size, size),
       painter: _MushroomIconPainter(
-        capColor: capColor,
-        stemColor: stemColor,
+        capColor: effectiveColor,
+        stemColor: stemColor ?? effectiveColor.withValues(alpha: 0.85),
       ),
     );
   }
@@ -384,6 +392,9 @@ class _MushroomIconPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+
     final capPaint = Paint()
       ..color = capColor
       ..style = PaintingStyle.fill
@@ -394,37 +405,44 @@ class _MushroomIconPainter extends CustomPainter {
       ..style = PaintingStyle.fill
       ..isAntiAlias = true;
 
-    // Stem: rounded pillar
-    final stemRect = RRect.fromRectAndRadius(
-      Rect.fromCenter(
-        center: Offset(size.width * 0.5, size.height * 0.72),
-        width: size.width * 0.34,
-        height: size.height * 0.44,
-      ),
-      Radius.circular(size.width * 0.14),
-    );
-    canvas.drawRRect(stemRect, stemPaint);
-
-    // Cap: rounded dome
+    // 1. Cap: sleek, modern aerodynamic dome with smooth bottom curvature
     final capPath = ui.Path();
-    capPath.moveTo(size.width * 0.12, size.height * 0.56);
+    capPath.moveTo(w * 0.10, h * 0.50);
     capPath.cubicTo(
-      size.width * 0.10, size.height * 0.18,
-      size.width * 0.90, size.height * 0.18,
-      size.width * 0.88, size.height * 0.56,
+      w * 0.10, h * 0.14,
+      w * 0.90, h * 0.14,
+      w * 0.90, h * 0.50,
+    );
+    capPath.cubicTo(
+      w * 0.70, h * 0.54,
+      w * 0.30, h * 0.54,
+      w * 0.10, h * 0.50,
     );
     capPath.close();
     canvas.drawPath(capPath, capPaint);
 
-    // Subtle white dot on cap
-    final dotPaint = Paint()..color = Colors.white.withValues(alpha: 0.6);
-    canvas.drawCircle(
-      Offset(size.width * 0.36, size.height * 0.36),
-      size.width * 0.07,
-      dotPaint,
+    // 2. Stem: elegant rounded column with soft flare and subtle micro-gap
+    final stemPath = ui.Path();
+    final stemTop = h * 0.57;
+    final stemBottom = h * 0.90;
+
+    stemPath.moveTo(w * 0.37, stemTop);
+    stemPath.lineTo(w * 0.63, stemTop);
+    stemPath.cubicTo(
+      w * 0.65, h * 0.74,
+      w * 0.67, stemBottom,
+      w * 0.50, stemBottom,
     );
+    stemPath.cubicTo(
+      w * 0.33, stemBottom,
+      w * 0.35, h * 0.74,
+      w * 0.37, stemTop,
+    );
+    stemPath.close();
+    canvas.drawPath(stemPath, stemPaint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _MushroomIconPainter oldDelegate) =>
+      oldDelegate.capColor != capColor || oldDelegate.stemColor != stemColor;
 }

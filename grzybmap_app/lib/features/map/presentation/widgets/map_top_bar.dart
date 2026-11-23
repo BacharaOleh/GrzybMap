@@ -35,6 +35,7 @@ class MapTopBar extends StatelessWidget {
           children: [
             // Search Bar with compact Emergency SOS pill
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: ForestSearchBar(
@@ -49,18 +50,18 @@ class MapTopBar extends StatelessWidget {
                       onOpenSos!();
                     },
                     child: Container(
-                      height: 48,
+                      height: 46,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
                         color: const Color(0xFF1E1010).withValues(alpha: 0.94),
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(23),
                         border: Border.all(
-                          color: AppColors.danger.withValues(alpha: 0.45),
+                          color: AppColors.danger.withValues(alpha: 0.50),
                           width: 1.0,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.danger.withValues(alpha: 0.20),
+                            color: AppColors.danger.withValues(alpha: 0.22),
                             blurRadius: 10,
                           ),
                         ],
@@ -69,10 +70,10 @@ class MapTopBar extends StatelessWidget {
                       child: const Text(
                         'SOS',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.danger,
                           fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.8,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.0,
                         ),
                       ),
                     ),
