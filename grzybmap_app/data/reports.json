@@ -1,52 +1,60 @@
 [
   {
-    "id": "rep_1795465413927",
-    "category": "fallen_tree",
-    "latitude": 51.2535,
-    "longitude": 22.5761,
-    "nadlesnictwo": "Skrzynice",
-    "oddzial": "691077",
-    "description": "Zwalona sosna na drodze",
-    "photoUrl": "assets/icons/report_sample.jpg",
-    "photoBase64": null,
-    "status": "resolved",
-    "createdAt": "2026-11-23T21:23:33.927",
-    "confirmationsCount": 1
-  },
-  {
-    "id": "rep-sample-01",
+    "id": "rep-001",
     "category": "fallen_tree",
     "latitude": 52.0528,
     "longitude": 21.3785,
     "nadlesnictwo": "Chojnów",
     "oddzial": "142a",
-    "description": "Zwalona sosna całkowicie blokuje drogę pożarową nr 7. Brak przejazdu dla wozów gaśniczych.",
-    "status": "resolved",
+    "description": "Zwalona gruba sosna całkowicie tarasuje drogę pożarową nr 7. Brak możliwości przejazdu wozów gaśniczych GCBA.",
+    "status": "pending",
     "confirmationsCount": 3,
-    "createdAt": "2026-11-23T14:15:00.000Z"
+    "createdAt": "2026-11-23T14:15:00.000Z",
+    "notes": "Weryfikacja patrolu terenowego - droga przejezdna",
+    "photoUrl": "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=600&q=80"
   },
   {
-    "id": "rep-sample-02",
+    "id": "rep-002",
     "category": "trash",
     "latitude": 52.0465,
     "longitude": 21.3892,
     "nadlesnictwo": "Chojnów",
     "oddzial": "138b",
-    "description": "Porzucone zużyte opony samochodowe (ok. 12 sztuk) w rowie przy linii oddziałowej.",
+    "description": "Porzucone zużyte opony i worki ze śmieciami w rowie przy linii oddziałowej.",
     "status": "in_progress",
     "confirmationsCount": 1,
-    "createdAt": "2026-11-23T10:45:00.000Z"
+    "createdAt": "2026-11-23T10:45:00.000Z",
+    "notes": "Zlecono ZUL-DrewPol, wywóz zaplanowany na czwartek",
+    "assignedZul": "ZUL DrewPol",
+    "photoUrl": "https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?auto=format&fit=crop&w=600&q=80"
   },
   {
-    "id": "rep-sample-03",
+    "id": "rep-003",
     "category": "fire_hazard",
     "latitude": 52.058,
     "longitude": 21.365,
     "nadlesnictwo": "Chojnów",
     "oddzial": "145c",
     "description": "Pozostałości po nielegalnym ognisku z wciąż tlącą się ściółką w strefie suchego boru.",
-    "status": "verified",
+    "status": "pending",
     "confirmationsCount": 2,
-    "createdAt": "2026-11-23T16:30:00.000Z"
+    "createdAt": "2026-11-23T16:30:00.000Z",
+    "notes": "Wysłano patrol terenowy Straży Leśnej",
+    "photoUrl": "https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=600&q=80"
+  },
+  {
+    "id": "rep-004",
+    "category": "vandalism",
+    "latitude": 51.2535,
+    "longitude": 22.5761,
+    "nadlesnictwo": "Skrzynice",
+    "oddzial": "691077",
+    "description": "Zniszczony szlaban wjazdowy na drogę leśną, połamany słupek blokujący wjazd quadom.",
+    "status": "resolved",
+    "confirmationsCount": 1,
+    "createdAt": "2026-11-22T09:20:00.000Z",
+    "resolvedAt": "2026-11-23T12:00:00.000Z",
+    "notes": "Szlaban zespawany i zakotwiony na nowo.",
+    "photoUrl": "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=600&q=80"
   }
 ]

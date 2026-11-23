@@ -270,6 +270,11 @@ const server = http.createServer((req, res) => {
         if (typeof updates.confirmationsCount === 'number') {
           target.confirmationsCount = updates.confirmationsCount;
         }
+        if (updates.notes !== undefined) target.notes = updates.notes;
+        if (updates.assignedZul !== undefined) target.assignedZul = updates.assignedZul;
+        if (updates.status === 'resolved' && !target.resolvedAt) {
+          target.resolvedAt = new Date().toISOString();
+        }
 
         saveReports(reports);
         res.writeHead(200, { 'Content-Type': 'application/json' });
