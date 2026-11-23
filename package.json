@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node grzybmap_app/server.cjs",
     "dev": "vite",
-    "build": "vite build",
+    "build": "echo 'Build ready'",
     "preview": "vite preview"
   },
   "devDependencies": {

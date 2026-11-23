@@ -4,6 +4,7 @@
   "description": "GrzybMap Flutter Web & Forester Dispatcher Server",
   "main": "server.cjs",
   "scripts": {
+    "build": "echo 'Build already compiled'",
     "start": "node server.cjs"
   }
 }
