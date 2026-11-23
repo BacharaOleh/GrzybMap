@@ -2,9 +2,7 @@ import 'dart:ui' as ui;
 import 'dart:ui' show ImageFilter, FontFeature;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../navigation/service/parking_service.dart';
 
 /// Floating glassmorphic dock at the bottom of the map screen (Thumb Zone).
 /// Houses the 5 core tactical features:
@@ -18,15 +16,6 @@ class TacticalIslandBar extends StatelessWidget {
   final String? targetMushroomName;
   final VoidCallback onToggleRadars;
   final VoidCallback? onLongPressRadars;
-
-  final LatLng? carLocation;
-  final ParkingNavigation? carNavigation;
-  final bool isCarRouteActive;
-  final DateTime? carParkedTime;
-  final VoidCallback onSaveCar;
-  final VoidCallback onToggleCarRoute;
-  final VoidCallback onCenterCar;
-  final VoidCallback onClearCar;
 
   final int journalSpotsCount;
   final VoidCallback onOpenJournal;
@@ -45,14 +34,6 @@ class TacticalIslandBar extends StatelessWidget {
     this.targetMushroomName,
     required this.onToggleRadars,
     this.onLongPressRadars,
-    required this.carLocation,
-    required this.carNavigation,
-    required this.isCarRouteActive,
-    required this.carParkedTime,
-    required this.onSaveCar,
-    required this.onToggleCarRoute,
-    required this.onCenterCar,
-    required this.onClearCar,
     required this.journalSpotsCount,
     required this.onOpenJournal,
     required this.onQuickAddSpot,
@@ -63,212 +44,8 @@ class TacticalIslandBar extends StatelessWidget {
     required this.onCycleLayer,
   });
 
-  String _formatCarElapsed() {
-    if (carParkedTime == null) return 'przed chwilą';
-    final elapsed = DateTime.now().difference(carParkedTime!);
-    if (elapsed.inMinutes < 1) return 'przed chwilą';
-    if (elapsed.inMinutes < 60) return '${elapsed.inMinutes} min temu';
-    final hours = elapsed.inHours;
-    final mins = elapsed.inMinutes % 60;
-    return '$hours godz. $mins min temu';
-  }
-
-  void _showCarOptionsSheet(BuildContext context) {
-    HapticFeedback.lightImpact();
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.surfaceElevated,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border.all(color: AppColors.border),
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: AppColors.amberWarn.withValues(alpha: 0.18),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.amberWarn.withValues(alpha: 0.6),
-                        width: 1.2,
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Icon(
-                      Icons.directions_car_rounded,
-                      color: AppColors.amberWarn,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Zaparkowane auto',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Zapisano: ${_formatCarElapsed()}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textDim,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              if (carNavigation != null) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _StatColumn(
-                        label: 'ODLEGŁOŚĆ',
-                        value: carNavigation!.humanDistance,
-                        icon: Icons.straighten_rounded,
-                      ),
-                      Container(width: 1, height: 32, color: AppColors.border),
-                      _StatColumn(
-                        label: 'KIERUNEK',
-                        value:
-                            '${carNavigation!.cardinalDirection} ${carNavigation!.arrowSymbol}',
-                        icon: Icons.explore_rounded,
-                      ),
-                      Container(width: 1, height: 32, color: AppColors.border),
-                      _StatColumn(
-                        label: 'MARSZ PIESZO',
-                        value: '~${carNavigation!.walkMinutes} min',
-                        icon: Icons.directions_walk_rounded,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: isCarRouteActive
-                            ? AppColors.amberWarn
-                            : Colors.white,
-                        side: BorderSide(
-                          color: isCarRouteActive
-                              ? AppColors.amberWarn
-                              : AppColors.border,
-                          width: isCarRouteActive ? 1.5 : 1.0,
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.of(ctx).pop();
-                        onToggleCarRoute();
-                      },
-                      icon: Icon(
-                        isCarRouteActive
-                            ? Icons.visibility_off_outlined
-                            : Icons.near_me_outlined,
-                        size: 18,
-                      ),
-                      label: Text(
-                        isCarRouteActive ? 'Ukryj linię' : 'Pokaż linię',
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.amberWarn,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.of(ctx).pop();
-                        onCenterCar();
-                      },
-                      icon: const Icon(Icons.my_location, size: 18),
-                      label: const Text(
-                        'Pokaż na mapie',
-                        style: TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton.icon(
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFFEF4444),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                  ),
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                    onClearCar();
-                  },
-                  icon: const Icon(Icons.delete_outline, size: 18),
-                  label: const Text(
-                    'Usuń znacznik auta',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final hasCar = carLocation != null;
 
     return SafeArea(
       child: Padding(
@@ -348,39 +125,7 @@ class TacticalIslandBar extends StatelessWidget {
 
                   const SizedBox(width: 6),
 
-                  // 2. Auto Tile Card
-                  Expanded(
-                    child: _TacticalTileCard(
-                      onTap: () {
-                        if (!hasCar) {
-                          HapticFeedback.mediumImpact();
-                          onSaveCar();
-                        } else {
-                          _showCarOptionsSheet(context);
-                        }
-                      },
-                      isActive: hasCar,
-                      activeBorderColor: AppColors.amberWarn.withValues(alpha: 0.5),
-                      cardColor: hasCar
-                          ? const Color(0xFF1E1A11)
-                          : const Color(0xFF131F17),
-                      icon: Icon(
-                        Icons.directions_car_rounded,
-                        size: 21,
-                        color: hasCar ? AppColors.amberWarn : AppColors.textDim,
-                      ),
-                      label: 'Auto',
-                      labelColor: hasCar ? Colors.white : AppColors.textDim,
-                      subtext: hasCar && carNavigation != null
-                          ? '${carNavigation!.humanDistance} ${carNavigation!.arrowSymbol}'
-                          : (hasCar ? 'Zapisane' : 'Zapisz'),
-                      subtextColor: hasCar ? AppColors.amberWarn : AppColors.textDim,
-                    ),
-                  ),
-
-                  const SizedBox(width: 6),
-
-                  // 3. Miejsca Tile Card (Hero Centerpiece)
+                  // 2. Miejsca Tile Card (Hero Centerpiece)
                   Expanded(
                     child: _TacticalTileCard(
                       onTap: () {
@@ -492,8 +237,6 @@ class _TacticalTileCard extends StatefulWidget {
   final Widget icon;
   final String label;
   final Color labelColor;
-  final String? subtext;
-  final Color? subtextColor;
   final Widget? topBadge;
   final bool isHero;
   final bool isActive;
@@ -506,8 +249,6 @@ class _TacticalTileCard extends StatefulWidget {
     required this.icon,
     required this.label,
     this.labelColor = Colors.white,
-    this.subtext,
-    this.subtextColor,
     this.topBadge,
     this.isHero = false,
     this.isActive = false,
@@ -585,20 +326,6 @@ class _TacticalTileCardState extends State<_TacticalTileCard> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (widget.subtext != null) ...[
-                            const SizedBox(height: 1),
-                            Text(
-                              widget.subtext!,
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                color: widget.subtextColor ?? AppColors.textDim,
-                                fontFeatures: const [FontFeature.tabularFigures()],
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
                         ],
                       ),
                     ),
@@ -700,45 +427,4 @@ class _MushroomIconPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _StatColumn extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-
-  const _StatColumn({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, size: 16, color: AppColors.textDim),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-            fontFeatures: [FontFeature.tabularFigures()],
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 9.5,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textDim,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ],
-    );
-  }
 }

@@ -50,7 +50,7 @@ class MapTopBar extends StatelessWidget {
                     },
                     child: Container(
                       height: 48,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
                         color: const Color(0xFF1E1010).withValues(alpha: 0.94),
                         borderRadius: BorderRadius.circular(24),
@@ -66,25 +66,14 @@ class MapTopBar extends StatelessWidget {
                         ],
                       ),
                       alignment: Alignment.center,
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.sos_rounded,
-                            color: AppColors.danger,
-                            size: 20,
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            'SOS',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
+                      child: const Text(
+                        'SOS',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                        ),
                       ),
                     ),
                   ),

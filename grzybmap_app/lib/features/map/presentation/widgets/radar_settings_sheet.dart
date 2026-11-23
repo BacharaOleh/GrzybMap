@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../controllers/map_screen_controller.dart';
@@ -143,6 +144,9 @@ class RadarSettingsSheet extends ConsumerWidget {
     final minProbability = ref.watch(
       mapScreenProvider.select((s) => s.radarMinProbability),
     );
+    final showParcelRadars = ref.watch(
+      mapScreenProvider.select((s) => s.showParcelRadars),
+    );
 
     final optionValues = [
       showMushroom,
@@ -269,6 +273,78 @@ class RadarSettingsSheet extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Master Switch: Show/Hide Radars on Map
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: showParcelRadars
+                              ? AppColors.emeraldNeon.withValues(alpha: 0.45)
+                              : Colors.white.withValues(alpha: 0.08),
+                          width: 0.8,
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: (showParcelRadars ? AppColors.emeraldNeon : AppColors.textDim)
+                                  .withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(
+                              showParcelRadars ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                              color: showParcelRadars ? AppColors.emeraldNeon : AppColors.textDim,
+                              size: 19,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Widoczność radarów',
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 1.5),
+                                Text(
+                                  showParcelRadars
+                                      ? 'Znaczniki grzybów są widoczne na mapie'
+                                      : 'Ukryte (czysty widok mapy)',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textDim,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Switch.adaptive(
+                            value: showParcelRadars,
+                            onChanged: (_) {
+                              HapticFeedback.lightImpact();
+                              ref.read(mapScreenProvider.notifier).toggleParcelRadars();
+                            },
+                            activeThumbColor: AppColors.emeraldNeon,
+                            activeTrackColor: AppColors.emeraldNeon.withValues(alpha: 0.35),
+                            inactiveThumbColor: AppColors.textDim,
+                            inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
                     // Live Preview Stage (Ambient HUD showcase)
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),

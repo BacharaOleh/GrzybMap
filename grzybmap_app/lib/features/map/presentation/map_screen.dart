@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -32,6 +31,8 @@ import '../../forest_reports/data/report_repository.dart';
 import '../../forest_reports/presentation/forest_report_sheet.dart';
 import '../../forest_reports/presentation/report_details_sheet.dart';
 import 'widgets/tactical_action_hub_sheet.dart';
+import 'widgets/car_fab.dart';
+import 'widgets/car_options_sheet.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -1141,86 +1142,98 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             },
           ),
 
-          // Compass Dial Widget pointing North (mockup parity)
-          CompassDialWidget(
-            onResetNorth: () {
-              _mapController.rotate(0);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Zorientowano mapę na północ (0°)'),
-                  backgroundColor: AppColors.emeraldDeep,
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            },
-          ),
-
-          // Quick Radar Toggle Button (1-tap to show/hide all radar markers)
+          // Car Location FAB (Yellow tactical button positioned above GPS button)
           Consumer(
             builder: (context, ref, _) {
-              final showRadars = ref.watch(
-                mapScreenProvider.select((s) => s.showParcelRadars),
+              final carLoc = ref.watch(
+                mapScreenProvider.select((s) => s.carLocation),
+              );
+              final nav = ref.watch(
+                mapScreenProvider.select((s) => s.carNavigation),
+              );
+              final isRouteActive = ref.watch(
+                mapScreenProvider.select((s) => s.showCarRoute),
+              );
+              final parkedTime = ref.watch(
+                mapScreenProvider.select((s) => s.carParkedTime),
               );
 
-              return Positioned(
-                bottom: 168,
-                right: 16,
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    ref.read(mapScreenProvider.notifier).toggleParcelRadars();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          !showRadars
-                              ? 'Włączono radar grzybów'
-                              : 'Ukryto radar (czysty widok mapy)',
-                        ),
-                        backgroundColor: !showRadars
-                            ? AppColors.emeraldDeep
-                            : AppColors.surfaceElevated,
-                        duration: const Duration(seconds: 2),
+              return CarFab(
+                carLocation: carLoc,
+                carNavigation: nav,
+                onSaveCar: () async {
+                  var userLoc = ref.read(mapScreenProvider).userLocation;
+                  userLoc ??= await ref.read(mapScreenProvider.notifier).locateUser();
+                  final target = userLoc ?? _mapController.camera.center;
+                  ref.read(mapScreenProvider.notifier).saveCarLocation(point: target);
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        userLoc != null
+                            ? 'Zapisano auto w Twojej pozycji'
+                            : 'Zapisano auto w centrum mapy (włącz GPS dla dystansu)',
                       ),
-                    );
-                  },
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(22),
-                    child: BackdropFilter(
-                      filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: showRadars
-                              ? const Color(0xFF0C2417).withValues(alpha: 0.92)
-                              : AppColors.surfaceElevated.withValues(alpha: 0.88),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: showRadars
-                                ? AppColors.emeraldNeon.withValues(alpha: 0.85)
-                                : AppColors.border,
-                            width: showRadars ? 1.5 : 1.0,
-                          ),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black38,
-                              blurRadius: 8,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          showRadars ? '🍄' : '👁️',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: showRadars ? Colors.white : AppColors.textDim,
-                          ),
-                        ),
-                      ),
+                      backgroundColor: AppColors.emeraldDeep,
+                      duration: const Duration(seconds: 3),
                     ),
-                  ),
-                ),
+                  );
+                },
+                onOpenCarOptions: () {
+                  CarOptionsSheet.show(
+                    context: context,
+                    carParkedTime: parkedTime,
+                    carNavigation: nav,
+                    isCarRouteActive: isRouteActive,
+                    onToggleCarRoute: () {
+                      ref.read(mapScreenProvider.notifier).toggleCarRoute();
+                      final isActive = ref.read(mapScreenProvider).showCarRoute;
+                      if (isActive && ref.read(mapScreenProvider).userLocation == null) {
+                        ref.read(mapScreenProvider.notifier).locateUser();
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            isActive
+                                ? 'Nawigacja: linia powrotu do auta włączona'
+                                : 'Ukryto linię nawigacji',
+                          ),
+                          backgroundColor: AppColors.card,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    onCenterCar: () {
+                      if (carLoc != null) {
+                        _mapController.move(carLoc, 16.0);
+                      }
+                    },
+                    onClearCar: () {
+                      ref.read(mapScreenProvider.notifier).clearCarLocation();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Usunięto znacznik auta'),
+                          backgroundColor: AppColors.card,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    onUpdateCarLocation: () async {
+                      var userLoc = ref.read(mapScreenProvider).userLocation;
+                      userLoc ??= await ref.read(mapScreenProvider.notifier).locateUser();
+                      final target = userLoc ?? _mapController.camera.center;
+                      ref.read(mapScreenProvider.notifier).saveCarLocation(point: target);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Zaktualizowano pozycję auta!'),
+                          backgroundColor: AppColors.emeraldDeep,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  );
+                },
               );
             },
           ),
@@ -1399,18 +1412,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               final downloadedAreas = ref.watch(
                 mapScreenProvider.select((s) => s.downloadedAreas),
               );
-              final carLoc = ref.watch(
-                mapScreenProvider.select((s) => s.carLocation),
-              );
-              final nav = ref.watch(
-                mapScreenProvider.select((s) => s.carNavigation),
-              );
-              final isRouteActive = ref.watch(
-                mapScreenProvider.select((s) => s.showCarRoute),
-              );
-              final parkedTime = ref.watch(
-                mapScreenProvider.select((s) => s.carParkedTime),
-              );
 
               final targetMushroom = targetMushroomId != null
                   ? MushroomDatabase.allMushrooms.firstWhere(
@@ -1437,61 +1438,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       const SnackBar(
                         content: Text('Zresetowano filtr grzyba (Wszystkie gatunki)'),
                         backgroundColor: AppColors.emeraldDeep,
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  carLocation: carLoc,
-                  carNavigation: nav,
-                  isCarRouteActive: isRouteActive,
-                  carParkedTime: parkedTime,
-                  onSaveCar: () async {
-                    var userLoc = ref.read(mapScreenProvider).userLocation;
-                    userLoc ??= await ref.read(mapScreenProvider.notifier).locateUser();
-                    final target = userLoc ?? _mapController.camera.center;
-                    ref.read(mapScreenProvider.notifier).saveCarLocation(point: target);
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          userLoc != null
-                              ? 'Zapisano auto w Twojej pozycji'
-                              : 'Zapisano auto w centrum mapy (włącz GPS dla dystansu)',
-                        ),
-                        backgroundColor: AppColors.emeraldDeep,
-                        duration: const Duration(seconds: 3),
-                      ),
-                    );
-                  },
-                  onToggleCarRoute: () {
-                    ref.read(mapScreenProvider.notifier).toggleCarRoute();
-                    final isActive = ref.read(mapScreenProvider).showCarRoute;
-                    if (isActive && ref.read(mapScreenProvider).userLocation == null) {
-                      ref.read(mapScreenProvider.notifier).locateUser();
-                    }
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          isActive
-                              ? 'Nawigacja: linia powrotu do auta włączona'
-                              : 'Ukryto linię nawigacji',
-                        ),
-                        backgroundColor: AppColors.card,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  onCenterCar: () {
-                    if (carLoc != null) {
-                      _mapController.move(carLoc, 16.0);
-                    }
-                  },
-                  onClearCar: () {
-                    ref.read(mapScreenProvider.notifier).clearCarLocation();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Usunięto znacznik auta'),
-                        backgroundColor: AppColors.card,
                         duration: Duration(seconds: 2),
                       ),
                     );

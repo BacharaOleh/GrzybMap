@@ -1,5 +1,19 @@
 [
   {
+    "id": "rep_1795465413927",
+    "category": "fallen_tree",
+    "latitude": 51.2535,
+    "longitude": 22.5761,
+    "nadlesnictwo": "Skrzynice",
+    "oddzial": "691077",
+    "description": "Zwalona sosna na drodze",
+    "photoUrl": "assets/icons/report_sample.jpg",
+    "photoBase64": null,
+    "status": "resolved",
+    "createdAt": "2026-11-23T21:23:33.927",
+    "confirmationsCount": 1
+  },
+  {
     "id": "rep-sample-01",
     "category": "fallen_tree",
     "latitude": 52.0528,
@@ -7,7 +21,7 @@
     "nadlesnictwo": "Chojnów",
     "oddzial": "142a",
     "description": "Zwalona sosna całkowicie blokuje drogę pożarową nr 7. Brak przejazdu dla wozów gaśniczych.",
-    "status": "pending",
+    "status": "resolved",
     "confirmationsCount": 3,
     "createdAt": "2026-11-23T14:15:00.000Z"
   },
@@ -26,8 +40,8 @@
   {
     "id": "rep-sample-03",
     "category": "fire_hazard",
-    "latitude": 52.0580,
-    "longitude": 21.3650,
+    "latitude": 52.058,
+    "longitude": 21.365,
     "nadlesnictwo": "Chojnów",
     "oddzial": "145c",
     "description": "Pozostałości po nielegalnym ognisku z wciąż tlącą się ściółką w strefie suchego boru.",
