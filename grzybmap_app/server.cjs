@@ -168,6 +168,120 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Serve Forester Dashboard at /lesnik or /lesnik.html
+  if (pathname === '/lesnik' || pathname === '/lesnik.html') {
+    const lesnikPath = path.join(__dirname, 'web', 'lesnik.html');
+    fs.readFile(lesnikPath, (err, data) => {
+      if (err) {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('Forester Dashboard Not Found');
+      } else {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(data);
+      }
+    });
+    return;
+  }
+
+  // Forest Reports API endpoints (/api/reports)
+  const REPORTS_FILE = path.join(__dirname, 'data', 'reports.json');
+
+  function getReports() {
+    try {
+      if (fs.existsSync(REPORTS_FILE)) {
+        return JSON.parse(fs.readFileSync(REPORTS_FILE, 'utf8'));
+      }
+    } catch (e) {
+      console.error('[REPORTS READ ERROR]', e.message);
+    }
+    return [];
+  }
+
+  function saveReports(reports) {
+    try {
+      const dataDir = path.dirname(REPORTS_FILE);
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      fs.writeFileSync(REPORTS_FILE, JSON.stringify(reports, null, 2), 'utf8');
+      return true;
+    } catch (e) {
+      console.error('[REPORTS WRITE ERROR]', e.message);
+      return false;
+    }
+  }
+
+  if (pathname === '/api/reports' && req.method === 'GET') {
+    const reports = getReports();
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(reports));
+    return;
+  }
+
+  if (pathname === '/api/reports' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const newReport = JSON.parse(body);
+        if (!newReport.id) {
+          newReport.id = 'rep-' + Date.now();
+        }
+        if (!newReport.createdAt) {
+          newReport.createdAt = new Date().toISOString();
+        }
+        if (!newReport.status) {
+          newReport.status = 'pending';
+        }
+        if (typeof newReport.confirmationsCount !== 'number') {
+          newReport.confirmationsCount = 1;
+        }
+
+        const reports = getReports();
+        reports.unshift(newReport);
+        saveReports(reports);
+
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, report: newReport }));
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON payload' }));
+      }
+    });
+    return;
+  }
+
+  if (pathname.startsWith('/api/reports/') && req.method === 'PATCH') {
+    const reportId = pathname.replace('/api/reports/', '');
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const updates = JSON.parse(body);
+        const reports = getReports();
+        const target = reports.find(r => r.id === reportId);
+        if (!target) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Report not found' }));
+          return;
+        }
+
+        if (updates.status) target.status = updates.status;
+        if (typeof updates.confirmationsCount === 'number') {
+          target.confirmationsCount = updates.confirmationsCount;
+        }
+
+        saveReports(reports);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, report: target }));
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON' }));
+      }
+    });
+    return;
+  }
+
   if (pathname === '/' || pathname === '') {
     pathname = '/index.html';
   }

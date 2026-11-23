@@ -1,0 +1,38 @@
+[
+  {
+    "id": "rep-sample-01",
+    "category": "fallen_tree",
+    "latitude": 52.0528,
+    "longitude": 21.3785,
+    "nadlesnictwo": "Chojnów",
+    "oddzial": "142a",
+    "description": "Zwalona sosna całkowicie blokuje drogę pożarową nr 7. Brak przejazdu dla wozów gaśniczych.",
+    "status": "pending",
+    "confirmationsCount": 3,
+    "createdAt": "2026-11-23T14:15:00.000Z"
+  },
+  {
+    "id": "rep-sample-02",
+    "category": "trash",
+    "latitude": 52.0465,
+    "longitude": 21.3892,
+    "nadlesnictwo": "Chojnów",
+    "oddzial": "138b",
+    "description": "Porzucone zużyte opony samochodowe (ok. 12 sztuk) w rowie przy linii oddziałowej.",
+    "status": "in_progress",
+    "confirmationsCount": 1,
+    "createdAt": "2026-11-23T10:45:00.000Z"
+  },
+  {
+    "id": "rep-sample-03",
+    "category": "fire_hazard",
+    "latitude": 52.0580,
+    "longitude": 21.3650,
+    "nadlesnictwo": "Chojnów",
+    "oddzial": "145c",
+    "description": "Pozostałości po nielegalnym ognisku z wciąż tlącą się ściółką w strefie suchego boru.",
+    "status": "verified",
+    "confirmationsCount": 2,
+    "createdAt": "2026-11-23T16:30:00.000Z"
+  }
+]

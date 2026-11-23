@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../forest_reports/presentation/forest_report_sheet.dart';
 import '../../../parcel_inspector/domain/models.dart';
 import '../../../weather/domain/models.dart';
 import '../../../mushroom_radar/domain/models.dart';
@@ -439,6 +441,59 @@ class _ParcelBottomSheetState extends State<ParcelBottomSheet> {
                   ],
                 ),
                 const SizedBox(height: 14),
+
+                // Art. 26 Ustawy o lasach Educational Warning Banner (Uprawy leśne < 4m)
+                if (parcel.ageYears <= 15 ||
+                    parcel.ageCategory.toLowerCase().contains('upraw') ||
+                    parcel.ageCategory.toLowerCase().contains('młodnik')) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF26190A).withValues(alpha: 0.95),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.45),
+                        width: 1.0,
+                      ),
+                    ),
+                    child: const Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.shield_outlined,
+                          color: Color(0xFFF59E0B),
+                          size: 20,
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Młoda uprawa leśna (<4m) — Art. 26',
+                                style: TextStyle(
+                                  color: Color(0xFFFBBF24),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              SizedBox(height: 3),
+                              Text(
+                                'Zgodnie z art. 26 ust. 2 pkt 1 Ustawy o lasach wstęp i zbiór runa w młodych uprawach leśnych do 4 m wysokości są zabronione. Chrońmy sadzonki!',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
 
                 // === 1. MUSHROOM RADAR (HERO SECTION) ===
                 Row(
@@ -1648,6 +1703,33 @@ class _ForestDetailsSpoilerState extends State<ForestDetailsSpoiler> {
                               context,
                               '${parcel.latitude.toStringAsFixed(5)}, ${parcel.longitude.toStringAsFixed(5)}',
                               'Współrzędne GPS',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              ForestReportSheet.show(
+                                context: context,
+                                location: LatLng(parcel.latitude, parcel.longitude),
+                                parcel: parcel,
+                              );
+                            },
+                            icon: const Icon(Icons.campaign_outlined, size: 16),
+                            label: const Text('Zgłoś problem na tym wydzieleniu'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.amberWarn,
+                              side: const BorderSide(
+                                color: AppColors.amberWarn,
+                                width: 0.8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
                             ),
                           ),
                         ),

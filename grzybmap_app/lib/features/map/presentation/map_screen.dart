@@ -27,6 +27,11 @@ import '../../mushroom_radar/service/parcel_radar_service.dart';
 import '../../weather/domain/regional_rainfall.dart';
 import '../../offline_mode/presentation/widgets/download_area_dialog.dart';
 import '../../offline_mode/presentation/widgets/offline_areas_sheet.dart';
+import '../../safety/presentation/widgets/sos_position_sheet.dart';
+import '../../forest_reports/data/report_repository.dart';
+import '../../forest_reports/presentation/forest_report_sheet.dart';
+import '../../forest_reports/presentation/report_details_sheet.dart';
+import 'widgets/tactical_action_hub_sheet.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -253,6 +258,53 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         color: AppColors.textDim,
                       ),
                     ),
+                    const Divider(
+                      color: AppColors.borderLight,
+                      height: 1,
+                      thickness: 1,
+                    ),
+                    // Option 4: Report Incident (Eko-Zgłoszenie for State Forests)
+                    ListTile(
+                      onTap: () {
+                        Navigator.of(ctx).pop();
+                        ForestReportSheet.show(
+                          context: context,
+                          location: point,
+                          parcel: ref.read(mapScreenProvider).activeParcel,
+                        );
+                      },
+                      leading: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.campaign_rounded,
+                          size: 20,
+                          color: Color(0xFFEF4444),
+                        ),
+                      ),
+                      title: const Text(
+                        'Zgłoś w lesie (Śmieci / Wiatrołom)',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Zgłoś dzikie wysypisko lub powalone drzewo do Nadleśnictwa',
+                        style: TextStyle(color: AppColors.textDim, fontSize: 11),
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right_rounded,
+                        size: 16,
+                        color: AppColors.textDim,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -368,6 +420,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ref.watch(foragingJournalProvider.select((s) => s.spots));
     final isJournalVisible =
         ref.watch(foragingJournalProvider.select((s) => s.isLayerVisible));
+    final forestReports =
+        ref.watch(forestReportsProvider.select((s) => s.reports));
 
     final radarMarkerWidth = (showRadarMushroomName && showRadarTreeSpecies)
         ? 145.0
@@ -576,11 +630,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   }).toList(growable: false),
                 ),
 
-              // Consolidated Tactical Navigation & User Landmarks Layer (GPS, Destination Pin, Car Anchor, My Spots)
+              // Consolidated Tactical Navigation, User Landmarks & Forest Reports Layer
               if (userLocation != null ||
                   clickedPoint != null ||
                   carLocation != null ||
-                  (isJournalVisible && journalSpots.isNotEmpty))
+                  (isJournalVisible && journalSpots.isNotEmpty) ||
+                  forestReports.isNotEmpty)
                 MarkerLayer(
                   markers: [
                     // 1. Secret Foraging Spots (if visible)
@@ -848,6 +903,107 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           ),
                         ),
                       ),
+
+                    // 5. Crowdsourced Forest Incident Reports (Eko-Zgłoszenia)
+                    if (forestReports.isNotEmpty)
+                      ...forestReports.map((report) {
+                        return Marker(
+                          point: LatLng(report.latitude, report.longitude),
+                          width: 140,
+                          height: 52,
+                          alignment: Alignment.center,
+                          child: GestureDetector(
+                            onTap: () {
+                              ReportDetailsSheet.show(
+                                context: context,
+                                report: report,
+                                onConfirm: () {
+                                  ref
+                                      .read(forestReportsProvider.notifier)
+                                      .addConfirmation(report.id);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Dziękujemy! Potwierdzono zgłoszenie dla Nadleśnictwa.',
+                                      ),
+                                      backgroundColor: AppColors.emeraldDeep,
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3.5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF131A1E)
+                                        .withValues(alpha: 0.94),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: report.category.color,
+                                      width: 1.2,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: report.category.color
+                                            .withValues(alpha: 0.4),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        report.category.iconData,
+                                        size: 14,
+                                        color: report.category.color,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          report.category.shortLabel,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (report.confirmationsCount > 1) ...[
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '+${report.confirmationsCount}',
+                                          style: TextStyle(
+                                            color: report.category.color,
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                                CustomPaint(
+                                  size: const Size(8, 5),
+                                  painter: _DownPointerPainter(
+                                    color: report.category.color,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
                   ],
                 ),
             ],
@@ -951,6 +1107,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 onOpenAbout: () =>
                     Navigator.of(context).pushNamed(AppRoutes.about),
                 isOfflineMode: isOfflineMode,
+                onOpenSos: () {
+                  final userLoc = ref.read(mapScreenProvider).userLocation;
+                  final parcel = ref.read(mapScreenProvider).activeParcel;
+                  final carNav = ref.read(mapScreenProvider).carNavigation;
+                  SosPositionSheet.show(
+                    context: context,
+                    location: userLoc ?? _mapController.camera.center,
+                    parcel: parcel,
+                    carNavigation: carNav,
+                  );
+                },
                 onOpenOfflineAreas: () => OfflineAreasSheet.show(
                   context: context,
                   currentCenter: _mapController.camera.center,
@@ -1330,8 +1497,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     );
                   },
                   journalSpotsCount: journalSpots.length,
-                  onOpenJournal: () =>
-                      Navigator.of(context).pushNamed(AppRoutes.journal),
+                  onOpenJournal: () {
+                    final userLoc = ref.read(mapScreenProvider).userLocation;
+                    final currentPoint =
+                        userLoc ?? _mapController.camera.center;
+                    final parcel = ref.read(mapScreenProvider).activeParcel;
+                    final carNav = ref.read(mapScreenProvider).carNavigation;
+                    TacticalActionHubSheet.show(
+                      context: context,
+                      currentPoint: currentPoint,
+                      parcel: parcel,
+                      carNavigation: carNav,
+                      journalSpotsCount: journalSpots.length,
+                      onOpenJournal: () =>
+                          Navigator.of(context).pushNamed(AppRoutes.journal),
+                    );
+                  },
                   onQuickAddSpot: () async {
                     var userLoc = ref.read(mapScreenProvider).userLocation;
                     userLoc ??= await ref.read(mapScreenProvider.notifier).locateUser();

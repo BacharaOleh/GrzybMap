@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../forest_search/domain/models.dart';
 import '../../../forest_search/presentation/widgets/forest_search_bar.dart';
@@ -11,6 +12,7 @@ class MapTopBar extends StatelessWidget {
   final VoidCallback? onOpenAbout;
   final bool isOfflineMode;
   final VoidCallback? onOpenOfflineAreas;
+  final VoidCallback? onOpenSos;
   final void Function(ForestSearchResult place) onSelectPlace;
 
   const MapTopBar({
@@ -18,6 +20,7 @@ class MapTopBar extends StatelessWidget {
     this.onOpenAbout,
     this.isOfflineMode = false,
     this.onOpenOfflineAreas,
+    this.onOpenSos,
     required this.onSelectPlace,
   });
 
@@ -30,9 +33,63 @@ class MapTopBar extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Full-width search bar without distracting app badge
-            ForestSearchBar(
-              onSelectPlace: onSelectPlace,
+            // Search Bar with compact Emergency SOS pill
+            Row(
+              children: [
+                Expanded(
+                  child: ForestSearchBar(
+                    onSelectPlace: onSelectPlace,
+                  ),
+                ),
+                if (onOpenSos != null) ...[
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      onOpenSos!();
+                    },
+                    child: Container(
+                      height: 48,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1010).withValues(alpha: 0.94),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: AppColors.danger.withValues(alpha: 0.45),
+                          width: 1.0,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.danger.withValues(alpha: 0.20),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      alignment: Alignment.center,
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.sos_rounded,
+                            color: AppColors.danger,
+                            size: 20,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'SOS',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
 
             // Optional: Offline Mode status badge if active
