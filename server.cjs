@@ -11,10 +11,32 @@ const brotliCompressAsync = promisify(zlib.brotliCompress);
 const gzipAsync = promisify(zlib.gzip);
 
 const PORT = process.env.PORT || 8088;
-const WEB_DIR = path.resolve(__dirname, 'build', 'web');
+function resolveExisting(paths, fallback) {
+  for (const p of paths) {
+    if (fs.existsSync(p)) return p;
+  }
+  return fallback;
+}
+
+const CANDIDATE_WEB_DIRS = [
+  path.resolve(__dirname, 'build', 'web'),
+  path.resolve(__dirname, 'grzybmap_app', 'build', 'web'),
+];
+const WEB_DIR = resolveExisting(CANDIDATE_WEB_DIRS, CANDIDATE_WEB_DIRS[0]);
 const WEB_PREFIX = WEB_DIR.endsWith(path.sep) ? WEB_DIR : WEB_DIR + path.sep;
-const LESNIK_PATH = path.resolve(__dirname, 'web', 'lesnik.html');
-const REPORTS_FILE = path.resolve(__dirname, 'data', 'reports.json');
+
+const CANDIDATE_LESNIK = [
+  path.resolve(WEB_DIR, 'lesnik.html'),
+  path.resolve(__dirname, 'web', 'lesnik.html'),
+  path.resolve(__dirname, 'grzybmap_app', 'web', 'lesnik.html'),
+];
+const LESNIK_PATH = resolveExisting(CANDIDATE_LESNIK, path.resolve(WEB_DIR, 'lesnik.html'));
+
+const CANDIDATE_REPORTS = [
+  path.resolve(__dirname, 'data', 'reports.json'),
+  path.resolve(__dirname, 'grzybmap_app', 'data', 'reports.json'),
+];
+const REPORTS_FILE = resolveExisting(CANDIDATE_REPORTS, path.resolve(__dirname, 'data', 'reports.json'));
 
 const MIN_COMPRESS_BYTES = 256;
 const MAX_CACHEABLE_FILE_BYTES = 16 * 1024 * 1024; // 16 MB
