@@ -92,6 +92,10 @@ class ForagingJournalScreen extends ConsumerWidget {
                       final spot = spots[index];
                       return _SpotCard(
                         spot: spot,
+                        onShowOnMap: () {
+                          HapticFeedback.selectionClick();
+                          Navigator.of(context).pop(spot);
+                        },
                         onTap: () {
                           SpotDetailsSheet.show(
                             context: context,
@@ -107,6 +111,9 @@ class ForagingJournalScreen extends ConsumerWidget {
                                   duration: Duration(seconds: 2),
                                 ),
                               );
+                            },
+                            onNavigate: () {
+                              Navigator.of(context).pop(spot);
                             },
                           );
                         },
@@ -365,10 +372,12 @@ class _FilterPill extends StatelessWidget {
 class _SpotCard extends StatelessWidget {
   final ForagingSpot spot;
   final VoidCallback onTap;
+  final VoidCallback? onShowOnMap;
 
   const _SpotCard({
     required this.spot,
     required this.onTap,
+    this.onShowOnMap,
   });
 
   @override
@@ -401,12 +410,15 @@ class _SpotCard extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                // Botanical Photo Thumbnail with concentric radius (10px inside 16px card with 12px padding)
+                // Botanical Photo Thumbnail or custom user photo with concentric radius
                 MushroomPhotoWidget(
                   assetPath: mushroom.photoAsset,
+                  base64Data: spot.photoPath,
                   size: 46,
                   borderRadius: AppRadii.inner,
-                  borderColor: AppColors.borderLight,
+                  borderColor: spot.hasPhoto
+                      ? AppColors.emeraldNeon.withValues(alpha: 0.6)
+                      : AppColors.borderLight,
                 ),
                 const SizedBox(width: 12),
 
@@ -434,12 +446,24 @@ class _SpotCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 3),
-                      Text(
-                        spot.formattedDate,
-                        style: AppTypography.microLabel.copyWith(
-                          color: AppColors.textDim,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            spot.formattedDate,
+                            style: AppTypography.microLabel.copyWith(
+                              color: AppColors.textDim,
+                              fontFeatures: const [FontFeature.tabularFigures()],
+                            ),
+                          ),
+                          if (spot.hasPhoto) ...[
+                            const SizedBox(width: 6),
+                            const Icon(
+                              Icons.photo_camera_rounded,
+                              size: 11,
+                              color: AppColors.emeraldNeon,
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),
@@ -463,12 +487,27 @@ class _SpotCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 6),
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 13,
-                  color: AppColors.textDim,
-                ),
+                if (onShowOnMap != null) ...[
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.explore_rounded,
+                      color: AppColors.emeraldNeon,
+                      size: 20,
+                    ),
+                    tooltip: 'Pokaż na mapie',
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    constraints: const BoxConstraints(),
+                    onPressed: onShowOnMap,
+                  ),
+                ] else ...[
+                  const SizedBox(width: 6),
+                  const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 13,
+                    color: AppColors.textDim,
+                  ),
+                ],
               ],
             ),
           ),

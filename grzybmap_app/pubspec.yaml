@@ -11,10 +11,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Icons & Styling
-  cupertino_icons: ^1.0.8
-  google_fonts: ^6.2.1
-
   # Maps & GIS
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
@@ -32,6 +28,7 @@ dependencies:
   # Local Persistence
   shared_preferences: ^2.3.2
   url_launcher: ^6.3.3
+  image_picker: ^1.2.4
 
 dev_dependencies:
   flutter_test:

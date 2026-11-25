@@ -28,7 +28,8 @@ class CarFab extends StatelessWidget {
     return Positioned(
       bottom: 168,
       right: 16,
-      child: Row(
+      child: RepaintBoundary(
+        child: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -134,6 +135,7 @@ class CarFab extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

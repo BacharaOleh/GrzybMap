@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../map/presentation/widgets/mushroom_photo_widget.dart';
@@ -15,6 +17,7 @@ class SaveSpotDialog extends ConsumerStatefulWidget {
   final String? forestParcelId;
   final String? preselectedMushroomId;
   final String? defaultTitle;
+  final String? initialPhotoBase64;
 
   const SaveSpotDialog({
     super.key,
@@ -22,6 +25,7 @@ class SaveSpotDialog extends ConsumerStatefulWidget {
     this.forestParcelId,
     this.preselectedMushroomId,
     this.defaultTitle,
+    this.initialPhotoBase64,
   });
 
   static Future<bool?> show({
@@ -30,6 +34,7 @@ class SaveSpotDialog extends ConsumerStatefulWidget {
     String? forestParcelId,
     String? preselectedMushroomId,
     String? defaultTitle,
+    String? initialPhotoBase64,
   }) {
     return showModalBottomSheet<bool>(
       context: context,
@@ -40,6 +45,7 @@ class SaveSpotDialog extends ConsumerStatefulWidget {
         forestParcelId: forestParcelId,
         preselectedMushroomId: preselectedMushroomId,
         defaultTitle: defaultTitle,
+        initialPhotoBase64: initialPhotoBase64,
       ),
     );
   }
@@ -54,10 +60,12 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
   late String _selectedMushroomId;
   double _quantity = 1.0;
   String _unit = 'kg'; // 'kg' or 'szt.'
+  String? _photoBase64;
 
   @override
   void initState() {
     super.initState();
+    _photoBase64 = widget.initialPhotoBase64;
     _selectedMushroomId = widget.preselectedMushroomId ??
         MushroomDatabase.allMushrooms.first.id;
 
@@ -109,6 +117,106 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
     }
   }
 
+  Future<void> _pickPhoto() async {
+    unawaited(HapticFeedback.selectionClick());
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceElevated,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border.all(color: AppColors.borderLight),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.borderLight,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const Text(
+                'Dodaj zdjęcie znaleziska',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.emeraldNeon.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.photo_camera_rounded, color: AppColors.emeraldNeon),
+                ),
+                title: const Text('Zrób zdjęcie (Aparat)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                subtitle: const Text('Uruchom aparat fotograficzny', style: TextStyle(color: AppColors.textDim, fontSize: 12)),
+                onTap: () => Navigator.of(ctx).pop(ImageSource.camera),
+              ),
+              const Divider(color: AppColors.borderLight, height: 1),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.emeraldLight.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.photo_library_rounded, color: AppColors.emeraldLight),
+                ),
+                title: const Text('Wybierz z galerii', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                subtitle: const Text('Wybierz zapisane zdjęcie z pamięci urządzenia', style: TextStyle(color: AppColors.textDim, fontSize: 12)),
+                onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    try {
+      final picker = ImagePicker();
+      final XFile? file = await picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 75,
+      );
+      if (file != null) {
+        final bytes = await file.readAsBytes();
+        final base64Str = base64Encode(bytes);
+        if (mounted) {
+          setState(() {
+            _photoBase64 = base64Str;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Błąd podczas wybierania zdjęcia: $e'),
+            backgroundColor: AppColors.card,
+          ),
+        );
+      }
+    }
+  }
+
   void _submit() {
     unawaited(HapticFeedback.mediumImpact());
     final title = _titleController.text.trim().isEmpty
@@ -133,6 +241,7 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
       foundAt: DateTime.now(),
       notes: _notesController.text.trim(),
       forestParcelId: widget.forestParcelId,
+      photoPath: _photoBase64,
     );
 
     ref.read(foragingJournalProvider.notifier).addSpot(spot);
@@ -558,6 +667,142 @@ class _SaveSpotDialogState extends ConsumerState<SaveSpotDialog> {
                 ),
               ),
             ),
+
+            const SizedBox(height: 14),
+
+            // Photo attachment section
+            const Text(
+              'Zdjęcie znaleziska (opcjonalnie)',
+              style: AppTypography.labelSmall,
+            ),
+            const SizedBox(height: 6),
+            if (_photoBase64 == null)
+              InkWell(
+                onTap: _pickPhoto,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.borderLight),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AppColors.emeraldNeon.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.add_a_photo_rounded,
+                          size: 20,
+                          color: AppColors.emeraldNeon,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Dodaj zdjęcie do znaleziska',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Zrób zdjęcie aparatem lub wybierz z galerii',
+                              style: TextStyle(
+                                color: AppColors.textDim,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(
+                        Icons.add_rounded,
+                        size: 20,
+                        color: AppColors.emeraldNeon,
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.emeraldNeon.withValues(alpha: 0.5),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    MushroomPhotoWidget(
+                      assetPath: null,
+                      base64Data: _photoBase64,
+                      size: 54,
+                      borderRadius: 10,
+                      borderColor: AppColors.emeraldNeon,
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.check_circle_rounded,
+                                  size: 14, color: AppColors.emeraldNeon),
+                              SizedBox(width: 4),
+                              Text(
+                                'Zdjęcie dołączone',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Zapisane w pamięci lokalnej',
+                            style: TextStyle(
+                              color: AppColors.textDim,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _pickPhoto,
+                      child: const Text('Zmień',
+                          style: TextStyle(
+                              color: AppColors.emeraldLight, fontSize: 12)),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _photoBase64 = null);
+                      },
+                      icon: const Icon(Icons.delete_outline_rounded,
+                          size: 20, color: Colors.redAccent),
+                      tooltip: 'Usuń zdjęcie',
+                    ),
+                  ],
+                ),
+              ),
 
             const SizedBox(height: 20),
 

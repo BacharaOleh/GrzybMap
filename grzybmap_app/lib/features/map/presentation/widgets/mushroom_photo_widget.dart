@@ -1,12 +1,16 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 
-/// Resilient and aesthetic photo widget for mushroom species and their lookalikes.
+/// Resilient and aesthetic photo widget for mushroom species and user-attached photos.
 ///
-/// Handles asset loading gracefully with beautiful botanical fallbacks,
-/// custom sizes, and danger/edibility borders.
+/// Handles custom user photos (base64 or memory bytes) and asset loading gracefully
+/// with beautiful botanical fallbacks, custom sizes, and danger/edibility borders.
 class MushroomPhotoWidget extends StatelessWidget {
   final String? assetPath;
+  final String? base64Data;
+  final Uint8List? memoryBytes;
   final String fallbackEmoji;
   final double size;
   final double? width;
@@ -20,6 +24,8 @@ class MushroomPhotoWidget extends StatelessWidget {
   const MushroomPhotoWidget({
     super.key,
     required this.assetPath,
+    this.base64Data,
+    this.memoryBytes,
     this.fallbackEmoji = '🍄',
     this.size = 48.0,
     this.width,
@@ -31,11 +37,30 @@ class MushroomPhotoWidget extends StatelessWidget {
     this.glowShadow,
   });
 
+  Uint8List? _resolveBytes() {
+    if (memoryBytes != null && memoryBytes!.isNotEmpty) {
+      return memoryBytes;
+    }
+    if (base64Data != null && base64Data!.trim().isNotEmpty) {
+      try {
+        String clean = base64Data!.trim();
+        if (clean.contains(',')) {
+          clean = clean.split(',').last;
+        }
+        return base64Decode(clean);
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final effectiveBorderColor = borderColor ?? AppColors.borderLight;
     final w = width ?? size;
     final h = height ?? size;
+    final bytes = _resolveBytes();
 
     return Container(
       width: w,
@@ -51,17 +76,30 @@ class MushroomPhotoWidget extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius - borderWidth),
-        child: assetPath != null && assetPath!.isNotEmpty
-            ? Image.asset(
-                assetPath!,
+        child: bytes != null
+            ? Image.memory(
+                bytes,
                 width: w,
                 height: h,
                 fit: fit,
-                errorBuilder: (context, error, stackTrace) => _buildFallback(w, h),
+                errorBuilder: (context, error, stackTrace) => _buildAssetOrFallback(w, h),
               )
-            : _buildFallback(w, h),
+            : _buildAssetOrFallback(w, h),
       ),
     );
+  }
+
+  Widget _buildAssetOrFallback(double w, double h) {
+    if (assetPath != null && assetPath!.isNotEmpty) {
+      return Image.asset(
+        assetPath!,
+        width: w,
+        height: h,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) => _buildFallback(w, h),
+      );
+    }
+    return _buildFallback(w, h);
   }
 
   Widget _buildFallback(double w, double h) {

@@ -80,9 +80,12 @@ class SpotDetailsSheet extends StatelessWidget {
               children: [
                 MushroomPhotoWidget(
                   assetPath: mushroom.photoAsset,
+                  base64Data: spot.photoPath,
                   size: 48,
                   borderRadius: 12,
-                  borderColor: AppColors.emeraldNeon.withValues(alpha: 0.35),
+                  borderColor: spot.hasPhoto
+                      ? AppColors.emeraldNeon
+                      : AppColors.emeraldNeon.withValues(alpha: 0.35),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -149,6 +152,61 @@ class SpotDetailsSheet extends StatelessWidget {
                 ),
               ],
             ),
+
+            if (spot.hasPhoto) ...[
+              const SizedBox(height: 14),
+              ClipRRect(
+                borderRadius: AppRadii.cardRadius,
+                child: Container(
+                  height: 150,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: AppRadii.cardRadius,
+                    border: Border.all(color: AppColors.borderLight),
+                  ),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      MushroomPhotoWidget(
+                        assetPath: null,
+                        base64Data: spot.photoPath,
+                        width: double.infinity,
+                        height: 150,
+                        borderRadius: 16,
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.75),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.emeraldNeon.withValues(alpha: 0.5)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.photo_camera_rounded, size: 12, color: AppColors.emeraldNeon),
+                              SizedBox(width: 4),
+                              Text(
+                                'Twoje zdjęcie',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
 
             const SizedBox(height: 18),
 

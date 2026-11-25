@@ -74,6 +74,35 @@ void main() {
       );
       expect(integerSpot.humanQuantity, '20 szt.');
     });
+
+    test('photo attachment and decoding getters operate accurately', () {
+      final spotNoPhoto = ForagingSpot(
+        id: 'np-1',
+        title: 'Brak zdjęcia',
+        mushroomId: 'borowik',
+        mushroomName: 'Borowik',
+        mushroomEmoji: '🍄',
+        quantityAmount: 1.0,
+        quantityUnit: 'kg',
+        latitude: 52.0,
+        longitude: 21.0,
+        foundAt: DateTime.now(),
+      );
+      expect(spotNoPhoto.hasPhoto, isFalse);
+      expect(spotNoPhoto.photoBytes, isNull);
+
+      const fakeBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+      final spotWithPhoto = spotNoPhoto.copyWith(photoPath: fakeBase64);
+      expect(spotWithPhoto.hasPhoto, isTrue);
+      expect(spotWithPhoto.photoBytes, isNotNull);
+      expect(spotWithPhoto.photoBytes!.length, greaterThan(10));
+
+      final json = spotWithPhoto.toJson();
+      final restored = ForagingSpot.fromJson(json);
+      expect(restored.hasPhoto, isTrue);
+      expect(restored.photoPath, fakeBase64);
+      expect(restored.photoBytes, isNotNull);
+    });
   });
 
   group('ForagingJournalService Local Storage Tests (100% Offline)', () {

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 /// Immutable model representing a private, user-saved secret foraging spot.
 ///
@@ -49,6 +50,23 @@ class ForagingSpot {
     final hour = foundAt.hour.toString().padLeft(2, '0');
     final minute = foundAt.minute.toString().padLeft(2, '0');
     return '$day.$month.$year $hour:$minute';
+  }
+
+  /// Whether the user has attached a custom photo to this spot.
+  bool get hasPhoto => photoPath != null && photoPath!.trim().isNotEmpty;
+
+  /// Decodes base64 photo bytes if available, returning null on invalid format.
+  Uint8List? get photoBytes {
+    if (!hasPhoto) return null;
+    try {
+      String clean = photoPath!.trim();
+      if (clean.contains(',')) {
+        clean = clean.split(',').last;
+      }
+      return base64Decode(clean);
+    } catch (_) {
+      return null;
+    }
   }
 
   ForagingSpot copyWith({

@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Local persistent storage service using SharedPreferences.
@@ -6,11 +7,26 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// onboarding state, and radar preferences across app sessions.
 class PreferencesService {
   SharedPreferences? _prefs;
+  Future<void>? _initFuture;
 
   PreferencesService([this._prefs]);
 
+  bool get isInitialized => _prefs != null;
+
   Future<void> init() async {
-    _prefs ??= await SharedPreferences.getInstance();
+    if (_prefs != null) return;
+    _initFuture ??= _loadPrefs();
+    await _initFuture;
+  }
+
+  Future<void> _loadPrefs() async {
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+    } on MissingPluginException {
+      // Safe no-op in bare widget tests without SharedPreferences mock binding.
+    } finally {
+      _initFuture = null;
+    }
   }
 
   // --- CAR PARKING PERSISTENCE ---

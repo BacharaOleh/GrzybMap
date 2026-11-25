@@ -165,6 +165,51 @@ void main() {
       expect(find.text('Brak zapisanych miejscówek'), findsOneWidget);
       expect(find.byIcon(Icons.bookmark_border_rounded), findsOneWidget);
     });
+
+    testWidgets('tapping explore icon on spot card pops screen returning selected spot', (tester) async {
+      final jsonList = [testSpot1, testSpot2].map((s) => s.toJson()).toList();
+      await prefs.setStringList('foraging_secret_spots', jsonList);
+
+      ForagingSpot? returnedSpot;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            foragingJournalServiceProvider.overrideWithValue(ForagingJournalService(prefs)),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.forestDark,
+            home: Builder(
+              builder: (ctx) => Scaffold(
+                body: ElevatedButton(
+                  onPressed: () async {
+                    returnedSpot = await Navigator.of(ctx).push<ForagingSpot>(
+                      MaterialPageRoute(builder: (_) => const ForagingJournalScreen()),
+                    );
+                  },
+                  child: const Text('Open Journal'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Open journal
+      await tester.tap(find.text('Open Journal'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Polana Borowikowa'), findsOneWidget);
+
+      // Tap 'Pokaż na mapie' button on card
+      final exploreBtn = find.byTooltip('Pokaż na mapie');
+      expect(exploreBtn, findsWidgets);
+      await tester.tap(exploreBtn.first);
+      await tester.pumpAndSettle();
+
+      expect(returnedSpot, isNotNull);
+      expect(returnedSpot!.title, 'Złote Kurki');
+    });
   });
 
   group('SaveSpotDialog Widget Tests', () {
@@ -268,6 +313,29 @@ void main() {
       await tester.tap(find.byIcon(Icons.add));
       await tester.pumpAndSettle();
       expect(find.text('6'), findsOneWidget);
+    });
+
+    testWidgets('attaches and displays initial photo in SaveSpotDialog and allows removal', (tester) async {
+      const fakeBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+      await tester.pumpWidget(
+        createWidgetUnderTest(
+          const SaveSpotDialog(
+            location: LatLng(52.2, 21.0),
+            initialPhotoBase64: fakeBase64,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Zdjęcie dołączone'), findsOneWidget);
+      expect(find.byTooltip('Usuń zdjęcie'), findsOneWidget);
+
+      // Tap remove photo
+      await tester.tap(find.byTooltip('Usuń zdjęcie'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Zdjęcie dołączone'), findsNothing);
+      expect(find.text('Dodaj zdjęcie do znaleziska'), findsOneWidget);
     });
   });
 

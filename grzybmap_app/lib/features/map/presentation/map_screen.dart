@@ -18,6 +18,7 @@ import 'widgets/mushroom_gauge_badge.dart';
 import 'widgets/onboarding_overlay.dart';
 import 'widgets/parcel_bottom_sheet.dart';
 import 'widgets/radar_settings_sheet.dart';
+import '../../foraging_journal/domain/models/foraging_spot.dart';
 import '../../foraging_journal/presentation/controllers/foraging_journal_controller.dart';
 import '../../foraging_journal/presentation/widgets/save_spot_dialog.dart';
 import '../../foraging_journal/presentation/widgets/spot_details_sheet.dart';
@@ -1104,40 +1105,42 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 mapScreenProvider.select((s) => s.isOfflineMode),
               );
 
-              return MapTopBar(
-                onOpenAbout: () =>
-                    Navigator.of(context).pushNamed(AppRoutes.about),
-                isOfflineMode: isOfflineMode,
-                onOpenSos: () {
-                  final userLoc = ref.read(mapScreenProvider).userLocation;
-                  final parcel = ref.read(mapScreenProvider).activeParcel;
-                  final carNav = ref.read(mapScreenProvider).carNavigation;
-                  SosPositionSheet.show(
+              return RepaintBoundary(
+                child: MapTopBar(
+                  onOpenAbout: () =>
+                      Navigator.of(context).pushNamed(AppRoutes.about),
+                  isOfflineMode: isOfflineMode,
+                  onOpenSos: () {
+                    final userLoc = ref.read(mapScreenProvider).userLocation;
+                    final parcel = ref.read(mapScreenProvider).activeParcel;
+                    final carNav = ref.read(mapScreenProvider).carNavigation;
+                    SosPositionSheet.show(
+                      context: context,
+                      location: userLoc ?? _mapController.camera.center,
+                      parcel: parcel,
+                      carNavigation: carNav,
+                    );
+                  },
+                  onOpenOfflineAreas: () => OfflineAreasSheet.show(
                     context: context,
-                    location: userLoc ?? _mapController.camera.center,
-                    parcel: parcel,
-                    carNavigation: carNav,
-                  );
-                },
-                onOpenOfflineAreas: () => OfflineAreasSheet.show(
-                  context: context,
-                  currentCenter: _mapController.camera.center,
-                  onNavigateToArea: (target) {
-                    _mapController.move(target, 14.2);
-                    _onTapMap(target);
+                    currentCenter: _mapController.camera.center,
+                    onNavigateToArea: (target) {
+                      _mapController.move(target, 14.2);
+                      _onTapMap(target);
+                    },
+                  ),
+                  onSelectPlace: (place) {
+                    _mapController.move(place.latLng, 14.5);
+                    _onTapMap(place.latLng);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Nawigacja do: ${place.shortName}'),
+                        backgroundColor: AppColors.emeraldDeep,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
                   },
                 ),
-                onSelectPlace: (place) {
-                  _mapController.move(place.latLng, 14.5);
-                  _onTapMap(place.latLng);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Nawigacja do: ${place.shortName}'),
-                      backgroundColor: AppColors.emeraldDeep,
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                },
               );
             },
           ),
@@ -1455,8 +1458,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       parcel: parcel,
                       carNavigation: carNav,
                       journalSpotsCount: journalSpots.length,
-                      onOpenJournal: () =>
-                          Navigator.of(context).pushNamed(AppRoutes.journal),
+                      onOpenJournal: () async {
+                        final selectedSpot =
+                            await Navigator.of(context).pushNamed(AppRoutes.journal);
+                        if (selectedSpot is ForagingSpot && mounted) {
+                          _mapController.move(
+                            LatLng(selectedSpot.latitude, selectedSpot.longitude),
+                            16.0,
+                          );
+                        }
+                      },
                     );
                   },
                   onQuickAddSpot: () async {
